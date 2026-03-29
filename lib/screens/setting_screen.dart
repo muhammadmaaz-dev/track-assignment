@@ -1,0 +1,285 @@
+import 'package:flutter/material.dart';
+import 'package:assignment_tracker/theme/constants.dart';
+
+class SettingScreen extends StatefulWidget {
+  const SettingScreen({Key? key}) : super(key: key);
+
+  @override
+  State<SettingScreen> createState() => _SettingScreenState();
+}
+
+class _SettingScreenState extends State<SettingScreen> {
+  bool _notificationsEnabled = false;
+  bool _darkModeEnabled = true;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 16),
+              // Header
+              const Text(
+                'Settings',
+                style: TextStyle(
+                  color: AppColors.primaryText,
+                  fontSize: 36,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Personalizing your digital workspace.',
+                style: TextStyle(
+                  color: AppColors.mutedText,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+              const SizedBox(height: 40),
+
+              // Preferences Container
+              Container(
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Column(
+                  children: [
+                    _buildSettingsRow(
+                      icon: Icons.notifications_none,
+                      title: 'Notifications',
+                      trailing: Switch(
+                        value: _notificationsEnabled,
+                        onChanged: (value) {
+                          setState(() {
+                            _notificationsEnabled = value;
+                          });
+                        },
+                        activeColor: Colors.white,
+                        activeTrackColor:
+                            Colors.teal, // Approximation based on standard
+                        inactiveThumbColor: Colors.white,
+                        inactiveTrackColor: AppColors.element,
+                      ),
+                    ),
+                    Divider(color: Colors.white.withOpacity(0.05), height: 1),
+                    _buildSettingsRow(
+                      icon: Icons.dark_mode,
+                      iconBgColor: Colors.white,
+                      iconColor: Colors.black,
+                      title: 'Dark Mode',
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text(
+                            'Enabled',
+                            style: TextStyle(
+                              color: AppColors.mutedText,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Switch(
+                            value: _darkModeEnabled,
+                            onChanged: (value) {
+                              setState(() {
+                                _darkModeEnabled = value;
+                              });
+                            },
+                            activeColor: Colors.white,
+                            activeTrackColor: Colors.grey.shade400,
+                            inactiveThumbColor: Colors.white,
+                            inactiveTrackColor: AppColors.element,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 32),
+
+              // System Section
+              const Text(
+                'SYSTEM',
+                style: TextStyle(
+                  color: AppColors.mutedText,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.5,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: _buildSettingsRow(
+                  icon: Icons.cloud_outlined,
+                  iconColor: AppColors.mutedText,
+                  title: 'Backup',
+                  titleColor: AppColors.mutedText,
+                  subtitle: 'Coming soon in v2.0',
+                  trailing: const Icon(
+                    Icons.lock_outline,
+                    color: AppColors.mutedText,
+                    size: 20,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 32),
+
+              // Information Section
+              const Text(
+                'INFORMATION',
+                style: TextStyle(
+                  color: AppColors.mutedText,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.5,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: _buildSettingsRow(
+                  icon: Icons.info_outline,
+                  title: 'About',
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text(
+                        'v1.4.2',
+                        style: TextStyle(
+                          color: AppColors.mutedText,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(
+                        Icons.chevron_right,
+                        color: AppColors.mutedText.withOpacity(0.5),
+                        size: 20,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 48),
+
+              // Footer
+              Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 16,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF111111), // Adjust as needed
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Column(
+                    children: [
+                      const Text(
+                        'ENCRYPTED ARCHIVE PROTOCOL V4.0',
+                        style: TextStyle(
+                          color: AppColors.mutedText,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.5,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Your data remains locally on this device.',
+                        style: TextStyle(
+                          color: AppColors.mutedText.withOpacity(0.7),
+                          fontSize: 10,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 100), // Spacing for bottom nav bar
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSettingsRow({
+    required IconData icon,
+    required String title,
+    String? subtitle,
+    required Widget trailing,
+    Color? iconBgColor,
+    Color? iconColor,
+    Color? titleColor,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+      child: Row(
+        children: [
+          // Icon
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: iconBgColor ?? Colors.transparent,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              icon,
+              color: iconColor ?? AppColors.primaryText,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 16),
+          // Title & Subtitle
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: titleColor ?? AppColors.primaryText,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                if (subtitle != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      color: AppColors.mutedText,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          // Trailing widget
+          trailing,
+        ],
+      ),
+    );
+  }
+}

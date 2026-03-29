@@ -1,0 +1,55 @@
+import 'package:assignment_tracker/screens/home_screen.dart';
+import 'package:assignment_tracker/screens/setting_screen.dart';
+import 'package:assignment_tracker/theme/constants.dart';
+import 'package:flutter/material.dart';
+import 'package:telegram_nav_bar/telegram_nav_bar.dart';
+
+class MainScreen extends StatefulWidget {
+  const MainScreen({super.key});
+
+  @override
+  State<MainScreen> createState() => _MainScreenState();
+}
+
+class _MainScreenState extends State<MainScreen> {
+  int _currentIndex = 0;
+
+  final List<Widget> _screens = [const HomeScreen(), const SettingScreen()];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+
+      // Still crucial for the liquid glass effect!
+      extendBody: true,
+
+      body: IndexedStack(index: _currentIndex, children: _screens),
+
+      // FAB has been entirely removed
+      bottomNavigationBar: TelegramNavBar(
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+        borderRadius: BorderRadius.circular(32),
+        showTopDivider: false,
+        currentIndex: _currentIndex,
+        onTap: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+        items: const [
+          TelegramNavItem(
+            icon: Icons.home_outlined,
+            activeIcon: Icons.home,
+            label: 'Home',
+          ),
+          TelegramNavItem(
+            icon: Icons.settings_outlined,
+            activeIcon: Icons.settings,
+            label: 'Settings',
+          ),
+        ],
+      ),
+    );
+  }
+}
