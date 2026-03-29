@@ -48,7 +48,7 @@ class _SettingScreenState extends State<SettingScreen> {
               Container(
                 decoration: BoxDecoration(
                   color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(25),
                 ),
                 child: Column(
                   children: [
@@ -178,42 +178,6 @@ class _SettingScreenState extends State<SettingScreen> {
               ),
               const SizedBox(height: 48),
 
-              // Footer
-              Center(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 16,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF111111), // Adjust as needed
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Column(
-                    children: [
-                      const Text(
-                        'ENCRYPTED ARCHIVE PROTOCOL V4.0',
-                        style: TextStyle(
-                          color: AppColors.mutedText,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.5,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Your data remains locally on this device.',
-                        style: TextStyle(
-                          color: AppColors.mutedText.withOpacity(0.7),
-                          fontSize: 10,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
               const SizedBox(height: 100), // Spacing for bottom nav bar
             ],
           ),
@@ -232,23 +196,11 @@ class _SettingScreenState extends State<SettingScreen> {
     Color? titleColor,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
       child: Row(
         children: [
           // Icon
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: iconBgColor ?? Colors.transparent,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              icon,
-              color: iconColor ?? AppColors.primaryText,
-              size: 22,
-            ),
-          ),
+          Icon(icon, color: iconColor ?? AppColors.primaryText, size: 22),
           const SizedBox(width: 16),
           // Title & Subtitle
           Expanded(

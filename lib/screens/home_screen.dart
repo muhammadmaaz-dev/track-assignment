@@ -13,53 +13,69 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   // Dummy data representing real-time data
-  List<Task> todaysFocusTasks = [
+  List<Task> allTasks = [
     Task(
       id: '1',
       title: 'Interaction Design Final Prototype',
       type: 'PROJECT',
-      dueDate: DateTime.now().add(const Duration(hours: 4)),
-      timeString: 'DUE 4:00 PM',
-      isHighPriority: true,
+      dueDate: DateTime.now().add(const Duration(hours: 4)), // Today
     ),
     Task(
       id: '2',
       title: 'Microeconomics Problem Set 4',
       type: 'ASSIGNMENT',
-      dueDate: DateTime.now().add(const Duration(hours: 11)),
-      timeString: 'DUE 11:59 PM',
-      isHighPriority: false,
+      dueDate: DateTime.now().add(const Duration(hours: 1)), // Today (Earliest)
     ),
     Task(
       id: '3',
       title: 'Cloud Computing Weekly Quiz',
       type: 'QUIZ',
-      dueDate: DateTime.now().add(const Duration(days: 1)),
-      timeString: '20 MINS',
-      isHighPriority: false,
+      dueDate: DateTime.now().add(
+        const Duration(days: 1, hours: 4),
+      ), // Tomorrow 4 PM
     ),
-  ];
-
-  List<Task> upcomingTasks = [
     Task(
       id: '4',
       title: 'Advanced Algorithms Essay',
       type: 'ASSIGNMENT',
-      dueDate: DateTime.now().add(const Duration(days: 2)),
-    ),
-    Task(
-      id: '5',
-      title: 'Modern Art History Presentation',
-      type: 'PROJECT',
-      dueDate: DateTime.now().add(const Duration(days: 4)),
-    ),
-    Task(
-      id: '6',
-      title: 'Philosophy Mid-Term Prep',
-      type: 'QUIZ',
-      dueDate: DateTime.now().add(const Duration(days: 30)), // Oct 30 dummy
+      dueDate: DateTime.now().add(
+        const Duration(days: 1, hours: 2),
+      ), // Tomorrow 2 PM
     ),
   ];
+
+  List<Task> todaysFocusTasks = [];
+  List<Task> upcomingTasks = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _organizetask();
+  }
+
+  void _organizetask() {
+    final now = DateTime.now();
+
+    todaysFocusTasks.clear();
+    upcomingTasks.clear();
+
+    for (var task in allTasks) {
+      bool isToday =
+          task.dueDate.year == now.year &&
+          task.dueDate.month == now.month &&
+          task.dueDate.day == now.day;
+
+      if (isToday) {
+        todaysFocusTasks.add(task);
+      } else if (task.dueDate.isAfter(now)) {
+        upcomingTasks.add(task);
+      }
+    }
+    todaysFocusTasks.sort((a, b) => a.dueDate.compareTo(b.dueDate));
+    upcomingTasks.sort((a, b) => a.dueDate.compareTo(b.dueDate));
+
+    setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -68,14 +84,24 @@ class _HomeScreenState extends State<HomeScreen> {
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 80),
         child: FloatingActionButton(
-          onPressed: () {
-            showModalBottomSheet(
+          // 1. Is function ko 'async' banayein
+          onPressed: () async {
+            // 2. Naya task aane ka wait karein
+            final Task? newTask = await showModalBottomSheet<Task>(
               context: context,
               isScrollControlled: true,
               backgroundColor: Colors.transparent,
               useSafeArea: true,
               builder: (context) => const NewTaskSheet(),
             );
+
+            // 3. Agar user ne task add kiya hai (cancel nahi kiya) to list me daal dein
+            if (newTask != null) {
+              setState(() {
+                allTasks.add(newTask); // Main list me add karein
+                _organizetask(); // Dobara sort aur filter karein
+              });
+            }
           },
           backgroundColor: Colors.white,
           child: const Icon(Icons.add, color: Colors.black),
@@ -118,16 +144,29 @@ class _HomeScreenState extends State<HomeScreen> {
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: todaysFocusTasks.length,
                 itemBuilder: (context, index) {
+                  bool isTopTask = index == 0;
+                  Task originalTask = todaysFocusTasks[index];
+
+                  Task displayTask = Task(
+                    id: originalTask.id,
+                    title: originalTask.title,
+                    type: originalTask.type,
+                    dueDate: originalTask.dueDate,
+                    timeString: originalTask.timeString,
+                    isHighPriority: isTopTask,
+                  );
+
                   return GestureDetector(
                     onTap: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => TaskDetailScreen(task: todaysFocusTasks[index]),
+                          builder: (context) =>
+                              TaskDetailScreen(task: originalTask),
                         ),
                       );
                     },
-                    child: TodaysFocusCard(task: todaysFocusTasks[index]),
+                    child: TodaysFocusCard(task: displayTask),
                   );
                 },
               ),
@@ -156,7 +195,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => TaskDetailScreen(task: upcomingTasks[index]),
+                          builder: (context) =>
+                              TaskDetailScreen(task: upcomingTasks[index]),
                         ),
                       );
                     },

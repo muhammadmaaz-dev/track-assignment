@@ -53,7 +53,10 @@ class TaskDetailScreen extends StatelessWidget {
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(20),
@@ -99,7 +102,11 @@ class TaskDetailScreen extends StatelessWidget {
             // Due Date
             Row(
               children: [
-                Icon(Icons.calendar_today_outlined, color: Colors.white.withOpacity(0.7), size: 16),
+                Icon(
+                  Icons.calendar_today_outlined,
+                  color: Colors.white.withOpacity(0.7),
+                  size: 16,
+                ),
                 const SizedBox(width: 8),
                 Text(
                   'Due ${DateFormat('MMM d, yyyy').format(task.dueDate)}',
@@ -154,7 +161,11 @@ class TaskDetailScreen extends StatelessWidget {
                           color: Colors.white.withOpacity(0.1),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.assignment_turned_in_outlined, color: Colors.white, size: 24),
+                        child: const Icon(
+                          Icons.assignment_turned_in_outlined,
+                          color: Colors.white,
+                          size: 24,
+                        ),
                       ),
                     ],
                   ),
@@ -180,7 +191,11 @@ class TaskDetailScreen extends StatelessWidget {
                           ),
                         ),
                         SizedBox(width: 8),
-                        Icon(Icons.check_circle_outline, color: Colors.black, size: 20),
+                        Icon(
+                          Icons.check_circle_outline,
+                          color: Colors.black,
+                          size: 20,
+                        ),
                       ],
                     ),
                   ),
@@ -344,7 +359,7 @@ class TaskDetailScreen extends StatelessWidget {
             _buildChecklistItem('Complete Problem Set Draft', false),
             const SizedBox(height: 16),
             _buildChecklistItem('Proofread Final Submission', false),
-            
+
             const SizedBox(height: 48), // Bottom padding
           ],
         ),

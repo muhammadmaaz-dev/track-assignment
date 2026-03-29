@@ -6,6 +6,7 @@ class Task {
   final String?
   timeString; // e.g., '4:00 PM', '20 MINS' - for UI simplicity in prototype
   final bool isHighPriority; // To style the first card differently
+  final String? description;
 
   Task({
     required this.id,
@@ -14,5 +15,6 @@ class Task {
     required this.dueDate,
     this.timeString,
     this.isHighPriority = false,
+    this.description,
   });
 }

@@ -1,5 +1,8 @@
+import 'package:assignment_tracker/models/task_model.dart';
 import 'package:flutter/material.dart';
 import 'package:assignment_tracker/theme/constants.dart';
+import 'package:cupertino_calendar_picker/cupertino_calendar_picker.dart';
+import 'package:intl/intl.dart';
 
 class NewTaskSheet extends StatefulWidget {
   const NewTaskSheet({super.key});
@@ -10,6 +13,41 @@ class NewTaskSheet extends StatefulWidget {
 
 class _NewTaskSheetState extends State<NewTaskSheet> {
   String _selectedType = 'Assignment';
+  final title = TextEditingController();
+  final description = TextEditingController();
+
+  // Naya variable time aur date store karne ke liye
+  DateTime _selectedDateTime = DateTime.now();
+
+  // Date Picker open karne ka function
+  // Date Picker open karne ka function
+  void _openDatePicker(BuildContext btnContext) async {
+    final RenderBox? renderBox = btnContext.findRenderObject() as RenderBox?;
+
+    // NAYA LOGIC: Current time nikal lein taake error na aaye
+    DateTime currentTime = DateTime.now();
+
+    // Agar humara selected time purana ho chuka hai (jaise form kholne ke 10 second baad),
+    // toh usko automatically current time par set kar dein taake crash na ho
+    DateTime safeInitialDate = _selectedDateTime.isBefore(currentTime)
+        ? currentTime
+        : _selectedDateTime;
+
+    final DateTime? picked = await showCupertinoCalendarPicker(
+      context,
+      widgetRenderBox: renderBox,
+      initialDateTime: safeInitialDate, // Yahan safe date pass karein
+      minimumDateTime: currentTime, // Minimum time
+      maximumDateTime: DateTime.now().add(const Duration(days: 365)),
+      mode: CupertinoCalendarMode.dateTime,
+    );
+
+    if (picked != null) {
+      setState(() {
+        _selectedDateTime = picked;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,11 +86,10 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
                 ),
                 GestureDetector(
                   onTap: () {
-                    // Handle save
                     Navigator.pop(context);
                   },
                   child: const Text(
-                    'Save',
+                    'Cancel', // Save ki jagah Cancel kiya kyunke neche Save button hai
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 16,
@@ -73,6 +110,7 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
                 children: [
                   // Title Input
                   TextField(
+                    controller: title, // Controller attach kar diya
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 32,
@@ -111,11 +149,19 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
                   const SizedBox(height: 24),
 
                   // Due Date
-                  _buildActionCard(
-                    icon: Icons.calendar_today_outlined,
-                    label: 'Due Date',
-                    value: 'Tomorrow, 11:59 PM',
-                    onTap: () {},
+                  Builder(
+                    // Builder use kiya taake picker ko exact button ki position milay
+                    builder: (btnContext) {
+                      return _buildActionCard(
+                        icon: Icons.calendar_today_outlined,
+                        label: 'Due Date',
+                        // Dynamic date format ho kar show hogi
+                        value: DateFormat(
+                          'MMM d, yyyy - h:mm a',
+                        ).format(_selectedDateTime),
+                        onTap: () => _openDatePicker(btnContext),
+                      );
+                    },
                   ),
                   const SizedBox(height: 24),
 
@@ -150,6 +196,7 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
                         ),
                         const SizedBox(height: 16),
                         TextField(
+                          controller: description,
                           maxLines: 4,
                           style: const TextStyle(
                             color: Colors.white,
@@ -290,7 +337,26 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
               height: 60,
               child: ElevatedButton(
                 onPressed: () {
-                  Navigator.pop(context);
+                  // Text field check
+                  if (title.text.trim().isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Please enter a task title'),
+                      ),
+                    );
+                    return;
+                  }
+
+                  Task userCreatedTask = Task(
+                    id: DateTime.now().millisecondsSinceEpoch.toString(),
+                    title: title.text.trim(),
+                    // Home Screen types mostly uppercase expected
+                    type: _selectedType.toUpperCase(),
+                    dueDate: _selectedDateTime,
+                    description: description.text.trim(),
+                  );
+
+                  Navigator.pop(context, userCreatedTask);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
@@ -312,13 +378,13 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
     );
   }
 
-  Widget _buildTypeSegment(String title) {
-    bool isSelected = _selectedType == title;
+  Widget _buildTypeSegment(String titleStr) {
+    bool isSelected = _selectedType == titleStr;
     return Expanded(
       child: GestureDetector(
         onTap: () {
           setState(() {
-            _selectedType = title;
+            _selectedType = titleStr;
           });
         },
         child: Container(
@@ -328,7 +394,7 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
           ),
           alignment: Alignment.center,
           child: Text(
-            title,
+            titleStr,
             style: TextStyle(
               color: isSelected ? Colors.black : Colors.white.withOpacity(0.7),
               fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,

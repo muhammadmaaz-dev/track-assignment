@@ -43,7 +43,7 @@ class TodaysFocusCard extends StatelessWidget {
                   task.type.toUpperCase(),
                   style: TextStyle(
                     color: textColor,
-                    fontSize: 12,
+                    fontSize: 11,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 1.2,
                   ),
@@ -54,7 +54,7 @@ class TodaysFocusCard extends StatelessWidget {
                   task.timeString!,
                   style: TextStyle(
                     color: subtitleColor,
-                    fontSize: 12,
+                    fontSize: 11,
                     fontWeight: FontWeight.w600,
                   ),
                 )
@@ -63,7 +63,7 @@ class TodaysFocusCard extends StatelessWidget {
                   'DUE ${DateFormat('h:mm a').format(task.dueDate)}',
                   style: TextStyle(
                     color: subtitleColor,
-                    fontSize: 12,
+                    fontSize: 11,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -74,7 +74,7 @@ class TodaysFocusCard extends StatelessWidget {
             task.title,
             style: TextStyle(
               color: textColor,
-              fontSize: 22,
+              fontSize: 20,
               fontWeight: FontWeight.w800,
               height: 1.2,
             ),
@@ -82,13 +82,13 @@ class TodaysFocusCard extends StatelessWidget {
           const SizedBox(height: 20),
           Row(
             children: [
-              Icon(Icons.access_time, size: 16, color: subtitleColor),
+              Icon(Icons.access_time, size: 14, color: subtitleColor),
               const SizedBox(width: 8),
               Text(
                 'DUE TODAY',
                 style: TextStyle(
                   color: subtitleColor,
-                  fontSize: 12,
+                  fontSize: 11,
                   fontWeight: FontWeight.bold,
                 ),
               ),

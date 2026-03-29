@@ -1,3 +1,4 @@
+import 'package:assignment_tracker/screens/history_screen.dart';
 import 'package:assignment_tracker/screens/home_screen.dart';
 import 'package:assignment_tracker/screens/setting_screen.dart';
 import 'package:assignment_tracker/theme/constants.dart';
@@ -14,14 +15,17 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
-  final List<Widget> _screens = [const HomeScreen(), const SettingScreen()];
+  final List<Widget> _screens = [
+    const HomeScreen(),
+    const HistoryScreen(),
+    const SettingScreen(),
+  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
 
-      // Still crucial for the liquid glass effect!
       extendBody: true,
 
       body: IndexedStack(index: _currentIndex, children: _screens),
@@ -42,6 +46,11 @@ class _MainScreenState extends State<MainScreen> {
             icon: Icons.home_outlined,
             activeIcon: Icons.home,
             label: 'Home',
+          ),
+          TelegramNavItem(
+            icon: Icons.history_toggle_off,
+            activeIcon: Icons.history_sharp,
+            label: 'History',
           ),
           TelegramNavItem(
             icon: Icons.settings_outlined,
