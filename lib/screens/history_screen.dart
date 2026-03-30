@@ -7,7 +7,7 @@ class HistoryScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      body: Text("History"),
+      body: Center(child: Text("History")),
     );
   }
 }

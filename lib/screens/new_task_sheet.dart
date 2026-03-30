@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:assignment_tracker/theme/constants.dart';
 import 'package:cupertino_calendar_picker/cupertino_calendar_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter/cupertino.dart';
 
 class NewTaskSheet extends StatefulWidget {
   const NewTaskSheet({super.key});
@@ -16,37 +17,332 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
   final title = TextEditingController();
   final description = TextEditingController();
 
-  // Naya variable time aur date store karne ke liye
   DateTime _selectedDateTime = DateTime.now();
 
-  // Date Picker open karne ka function
-  // Date Picker open karne ka function
+  // NAYA LOGIC: Single string ki jagah humne ek List bana di hai
+  List<String> _selectedReminders = [];
+
+  final List<String> _reminderOptions = [
+    '5 minutes before',
+    '10 minutes before',
+    '20 minutes before',
+    '40 minutes before',
+    '1 hour before',
+    '2 hours before',
+    '4 hours before',
+    '1 day before',
+    'Custom...',
+  ];
+
   void _openDatePicker(BuildContext btnContext) async {
     final RenderBox? renderBox = btnContext.findRenderObject() as RenderBox?;
 
-    // NAYA LOGIC: Current time nikal lein taake error na aaye
-    DateTime currentTime = DateTime.now();
-
-    // Agar humara selected time purana ho chuka hai (jaise form kholne ke 10 second baad),
-    // toh usko automatically current time par set kar dein taake crash na ho
-    DateTime safeInitialDate = _selectedDateTime.isBefore(currentTime)
-        ? currentTime
-        : _selectedDateTime;
+    DateTime now = DateTime.now();
+    DateTime stableCurrentTime = DateTime(
+      now.year,
+      now.month,
+      now.day,
+      now.hour,
+      now.minute,
+    );
 
     final DateTime? picked = await showCupertinoCalendarPicker(
       context,
       widgetRenderBox: renderBox,
-      initialDateTime: safeInitialDate, // Yahan safe date pass karein
-      minimumDateTime: currentTime, // Minimum time
-      maximumDateTime: DateTime.now().add(const Duration(days: 365)),
+      initialDateTime: _selectedDateTime,
+      minimumDateTime: DateTime(2000),
+      maximumDateTime: DateTime(2100),
       mode: CupertinoCalendarMode.dateTime,
     );
 
     if (picked != null) {
-      setState(() {
-        _selectedDateTime = picked;
-      });
+      if (picked.isBefore(stableCurrentTime)) {
+        setState(() {
+          _selectedDateTime = stableCurrentTime;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Cannot select a past time. Adjusted to current time.',
+            ),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      } else {
+        setState(() {
+          _selectedDateTime = picked;
+        });
+      }
     }
+  }
+
+  void _showCustomReminderDialog() {
+    final TextEditingController customValueController = TextEditingController();
+    String selectedUnit = 'minutes';
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: AppColors.surface,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+              title: const Text(
+                'Custom Reminder',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              content: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: customValueController,
+                      keyboardType: TextInputType.number,
+                      style: const TextStyle(color: Colors.white, fontSize: 18),
+                      decoration: InputDecoration(
+                        hintText: 'e.g. 15',
+                        hintStyle: TextStyle(
+                          color: Colors.white.withOpacity(0.3),
+                        ),
+                        enabledBorder: const UnderlineInputBorder(
+                          borderSide: BorderSide(color: Colors.white24),
+                        ),
+                        focusedBorder: const UnderlineInputBorder(
+                          borderSide: BorderSide(color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  DropdownButton<String>(
+                    value: selectedUnit,
+                    dropdownColor: AppColors.surface,
+                    style: const TextStyle(color: Colors.white, fontSize: 16),
+                    underline: const SizedBox(),
+                    icon: Icon(
+                      Icons.keyboard_arrow_down,
+                      color: Colors.white.withOpacity(0.7),
+                    ),
+                    items: ['minutes', 'hours', 'days'].map((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList(),
+                    onChanged: (newValue) {
+                      if (newValue != null) {
+                        setDialogState(() {
+                          selectedUnit = newValue;
+                        });
+                      }
+                    },
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text(
+                    'Cancel',
+                    style: TextStyle(color: Colors.white54),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () {
+                    int? val = int.tryParse(customValueController.text.trim());
+                    if (val == null || val <= 0) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Please enter a valid number'),
+                        ),
+                      );
+                      return;
+                    }
+
+                    Duration requiredDuration;
+                    if (selectedUnit == 'minutes') {
+                      requiredDuration = Duration(minutes: val);
+                    } else if (selectedUnit == 'hours') {
+                      requiredDuration = Duration(hours: val);
+                    } else {
+                      requiredDuration = Duration(days: val);
+                    }
+
+                    Duration timeUntilDue = _selectedDateTime.difference(
+                      DateTime.now(),
+                    );
+
+                    if (timeUntilDue <= requiredDuration) {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Task is due in less than $val $selectedUnit.',
+                          ),
+                          backgroundColor: Colors.redAccent,
+                        ),
+                      );
+                    } else {
+                      String displayUnit = val == 1
+                          ? selectedUnit.substring(0, selectedUnit.length - 1)
+                          : selectedUnit;
+
+                      String newReminder = '$val $displayUnit before';
+
+                      // List me add karein (Agar pehle se nahi hai)
+                      setState(() {
+                        if (!_selectedReminders.contains(newReminder)) {
+                          _selectedReminders.add(newReminder);
+                        }
+                      });
+                      Navigator.pop(context);
+                    }
+                  },
+                  child: const Text(
+                    'Save',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showReminderPicker() {
+    int tempSelectedIndex = 2; // Default to '20 minutes before'
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext context) {
+        return SizedBox(
+          height: 250,
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Add Reminder',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        String chosenOption =
+                            _reminderOptions[tempSelectedIndex];
+
+                        if (chosenOption == 'Custom...') {
+                          Navigator.pop(context);
+                          _showCustomReminderDialog();
+                          return;
+                        }
+
+                        Duration requiredDuration = Duration.zero;
+                        if (chosenOption.contains('minute')) {
+                          requiredDuration = Duration(
+                            minutes: int.parse(chosenOption.split(' ').first),
+                          );
+                        } else if (chosenOption.contains('hour')) {
+                          requiredDuration = Duration(
+                            hours: int.parse(chosenOption.split(' ').first),
+                          );
+                        } else if (chosenOption.contains('day')) {
+                          requiredDuration = Duration(
+                            days: int.parse(chosenOption.split(' ').first),
+                          );
+                        }
+
+                        Duration timeUntilDue = _selectedDateTime.difference(
+                          DateTime.now(),
+                        );
+
+                        if (timeUntilDue <= requiredDuration) {
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'Cannot set this reminder. Task is due in less than ${chosenOption.replaceAll(' before', '')}.',
+                              ),
+                              backgroundColor: Colors.redAccent,
+                            ),
+                          );
+                        } else {
+                          // List me add karein (Agar pehle se nahi hai)
+                          setState(() {
+                            if (!_selectedReminders.contains(chosenOption)) {
+                              _selectedReminders.add(chosenOption);
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Reminder already added!'),
+                                  backgroundColor: Colors.orange,
+                                ),
+                              );
+                            }
+                          });
+                          Navigator.pop(context);
+                        }
+                      },
+                      child: const Text(
+                        'Done',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: CupertinoPicker(
+                  backgroundColor: AppColors.surface,
+                  itemExtent: 40,
+                  scrollController: FixedExtentScrollController(
+                    initialItem: tempSelectedIndex,
+                  ),
+                  onSelectedItemChanged: (int index) {
+                    tempSelectedIndex = index;
+                  },
+                  children: _reminderOptions.map((String option) {
+                    return Center(
+                      child: Text(
+                        option,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -62,7 +358,6 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
       ),
       child: Column(
         children: [
-          // AppBar-like Header
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             child: Row(
@@ -89,7 +384,7 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
                     Navigator.pop(context);
                   },
                   child: const Text(
-                    'Cancel', // Save ki jagah Cancel kiya kyunke neche Save button hai
+                    'Cancel',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 16,
@@ -108,9 +403,8 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Title Input
                   TextField(
-                    controller: title, // Controller attach kar diya
+                    controller: title,
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 32,
@@ -128,7 +422,6 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Task Type Segmented Control
                   Container(
                     height: 50,
                     decoration: BoxDecoration(
@@ -148,14 +441,11 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Due Date
                   Builder(
-                    // Builder use kiya taake picker ko exact button ki position milay
                     builder: (btnContext) {
                       return _buildActionCard(
                         icon: Icons.calendar_today_outlined,
                         label: 'Due Date',
-                        // Dynamic date format ho kar show hogi
                         value: DateFormat(
                           'MMM d, yyyy - h:mm a',
                         ).format(_selectedDateTime),
@@ -165,7 +455,6 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Notes area
                   Container(
                     decoration: BoxDecoration(
                       color: AppColors.surface,
@@ -216,7 +505,6 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Attach File
                   Container(
                     decoration: BoxDecoration(
                       color: AppColors.surface,
@@ -276,7 +564,6 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
                   Divider(color: Colors.white.withOpacity(0.1), height: 1),
                   const SizedBox(height: 24),
 
-                  // Reminders
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -288,43 +575,97 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
                           fontWeight: FontWeight.w500,
                         ),
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.surface,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: const Text(
-                          'Add',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
+                      GestureDetector(
+                        onTap: _showReminderPicker,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.surface,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: const Text(
+                            'Add',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 40),
-                  Center(
-                    child: Text(
-                      'Empty',
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.2),
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 100), // padding for bottom button
+                  const SizedBox(height: 24),
+
+                  // DYNAMIC LIST RENDERER FOR MULTIPLE REMINDERS
+                  _selectedReminders.isEmpty
+                      ? Center(
+                          child: Text(
+                            'Empty',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.2),
+                              fontSize: 16,
+                            ),
+                          ),
+                        )
+                      : Column(
+                          children: _selectedReminders.map((reminder) {
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12.0),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                  vertical: 16,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.surface,
+                                  borderRadius: BorderRadius.circular(24),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.notifications_active,
+                                      color: Colors.white.withOpacity(0.8),
+                                      size: 20,
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: Text(
+                                        reminder,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                    GestureDetector(
+                                      onTap: () {
+                                        setState(() {
+                                          _selectedReminders.remove(reminder);
+                                        });
+                                      },
+                                      child: Icon(
+                                        Icons.close,
+                                        color: Colors.white.withOpacity(0.5),
+                                        size: 20,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                  const SizedBox(height: 100),
                 ],
               ),
             ),
           ),
 
-          // Bottom Save Task Button
           Padding(
             padding: EdgeInsets.only(
               left: 20,
@@ -337,7 +678,6 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
               height: 60,
               child: ElevatedButton(
                 onPressed: () {
-                  // Text field check
                   if (title.text.trim().isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
@@ -350,10 +690,10 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
                   Task userCreatedTask = Task(
                     id: DateTime.now().millisecondsSinceEpoch.toString(),
                     title: title.text.trim(),
-                    // Home Screen types mostly uppercase expected
                     type: _selectedType.toUpperCase(),
                     dueDate: _selectedDateTime,
                     description: description.text.trim(),
+                    // Reminders list save karni ho toh aapko apne Task model mein add karna padega pehle
                   );
 
                   Navigator.pop(context, userCreatedTask);

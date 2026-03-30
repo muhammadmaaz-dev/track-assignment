@@ -79,6 +79,7 @@ class TodaysFocusCard extends StatelessWidget {
               height: 1.2,
             ),
           ),
+
           const SizedBox(height: 20),
           Row(
             children: [

@@ -105,6 +105,7 @@ class _HomeScreenState extends State<HomeScreen> {
           },
           backgroundColor: Colors.white,
           child: const Icon(Icons.add, color: Colors.black),
+          shape: const CircleBorder(),
         ),
       ),
       body: SafeArea(
@@ -154,6 +155,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     dueDate: originalTask.dueDate,
                     timeString: originalTask.timeString,
                     isHighPriority: isTopTask,
+                    description: originalTask.description,
                   );
 
                   return GestureDetector(
@@ -191,6 +193,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     Divider(color: Colors.grey.shade800, height: 1),
                 itemBuilder: (context, index) {
                   return GestureDetector(
+                    behavior: HitTestBehavior.opaque,
                     onTap: () {
                       Navigator.push(
                         context,

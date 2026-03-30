@@ -10,6 +10,44 @@ class TaskDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // --- 1. REAL-TIME CALCULATIONS START ---
+    final now = DateTime.now();
+    final difference = task.dueDate.difference(now);
+
+    String val1 = '';
+    String unit1 = '';
+    String val2 = '';
+    String unit2 = '';
+    String currentStatus = 'In Progress';
+    Color statusIconColor = Colors.white;
+
+    if (difference.isNegative) {
+      val1 = '0';
+      unit1 = 'LATE';
+      currentStatus = 'Overdue';
+      statusIconColor = Colors.redAccent;
+    } else if (difference.inDays > 0) {
+      val1 = difference.inDays.toString();
+      unit1 = 'd'; // Days
+      int remHours = difference.inHours % 24;
+      if (remHours > 0) {
+        val2 = remHours.toString();
+        unit2 = 'h'; // Hours
+      }
+    } else if (difference.inHours > 0) {
+      val1 = difference.inHours.toString();
+      unit1 = 'h'; // Hours
+      int remMins = difference.inMinutes % 60;
+      if (remMins > 0) {
+        val2 = remMins.toString();
+        unit2 = 'm'; // Mins
+      }
+    } else {
+      val1 = difference.inMinutes.toString();
+      unit1 = 'm'; // Mins
+    }
+    // --- REAL-TIME CALCULATIONS END ---
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -136,23 +174,18 @@ class TaskDetailScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'CURRENT STATUS',
+                            // <-- REMOVE 'const' keyword here
+                            currentStatus, // <-- USE DYNAMIC VARIABLE
                             style: TextStyle(
-                              color: Colors.white.withOpacity(0.6),
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 1.5,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'In Progress',
-                            style: TextStyle(
-                              color: Colors.white,
+                              // <-- REMOVE 'const' keyword here
+                              color: currentStatus == 'Overdue'
+                                  ? Colors.redAccent
+                                  : Colors.white,
                               fontSize: 20,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
+                          const SizedBox(height: 8),
                         ],
                       ),
                       Container(
@@ -227,13 +260,15 @@ class TaskDetailScreen extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 8),
+                        // Inside the TIME LEFT container:
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.baseline,
                           textBaseline: TextBaseline.alphabetic,
                           children: [
-                            const Text(
-                              '4',
-                              style: TextStyle(
+                            // FIRST BIG NUMBER
+                            Text(
+                              val1,
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 44,
                                 fontWeight: FontWeight.bold,
@@ -241,15 +276,38 @@ class TaskDetailScreen extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(width: 4),
+                            // FIRST SMALL TEXT
                             Text(
-                              'DAYS',
+                              unit1,
                               style: TextStyle(
                                 color: Colors.white.withOpacity(0.6),
-                                fontSize: 12,
+                                fontSize: 14,
                                 fontWeight: FontWeight.w600,
-                                letterSpacing: 1.0,
                               ),
                             ),
+
+                            // SECOND BIG NUMBER & TEXT (Only shows if there is a remainder)
+                            if (val2.isNotEmpty) ...[
+                              const SizedBox(width: 12), // Space between groups
+                              Text(
+                                val2,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 44,
+                                  fontWeight: FontWeight.bold,
+                                  height: 1,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                unit2,
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.6),
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       ],
@@ -311,7 +369,7 @@ class TaskDetailScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(24),
               ),
               child: Text(
-                'Review Chapter 5-7. Focus on integration by parts. Bring any questions to the Friday study session.\n\nNote: The professor mentioned that Problem 3 will be similar to the mid-term bonus question. Pay special attention to the boundary conditions in the second section.',
+                task.description ?? 'No description provided.',
                 style: TextStyle(
                   color: Colors.white.withOpacity(0.8),
                   fontSize: 15,

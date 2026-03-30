@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:assignment_tracker/theme/constants.dart';
 
@@ -55,50 +56,29 @@ class _SettingScreenState extends State<SettingScreen> {
                     _buildSettingsRow(
                       icon: Icons.notifications_none,
                       title: 'Notifications',
-                      trailing: Switch(
+                      trailing: CupertinoSwitch(
                         value: _notificationsEnabled,
                         onChanged: (value) {
                           setState(() {
                             _notificationsEnabled = value;
                           });
                         },
-                        activeColor: Colors.white,
-                        activeTrackColor:
-                            Colors.teal, // Approximation based on standard
-                        inactiveThumbColor: Colors.white,
-                        inactiveTrackColor: AppColors.element,
+                        activeColor: Colors.teal, // The track color when ON
+                        trackColor:
+                            AppColors.element, // The track color when OFF
+                        thumbColor: Colors.white, // The circular knob color
                       ),
                     ),
+
                     Divider(color: Colors.white.withOpacity(0.05), height: 1),
                     _buildSettingsRow(
-                      icon: Icons.dark_mode,
+                      icon: Icons.my_library_books_outlined,
                       iconBgColor: Colors.white,
-                      iconColor: Colors.black,
-                      title: 'Dark Mode',
+                      iconColor: Colors.white,
+                      title: 'Set Marks',
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Text(
-                            'Enabled',
-                            style: TextStyle(
-                              color: AppColors.mutedText,
-                              fontSize: 14,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Switch(
-                            value: _darkModeEnabled,
-                            onChanged: (value) {
-                              setState(() {
-                                _darkModeEnabled = value;
-                              });
-                            },
-                            activeColor: Colors.white,
-                            activeTrackColor: Colors.grey.shade400,
-                            inactiveThumbColor: Colors.white,
-                            inactiveTrackColor: AppColors.element,
-                          ),
-                        ],
+                        children: [Icon(Icons.arrow_forward_ios)],
                       ),
                     ),
                   ],
@@ -196,7 +176,7 @@ class _SettingScreenState extends State<SettingScreen> {
     Color? titleColor,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
+      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 16.0),
       child: Row(
         children: [
           // Icon
