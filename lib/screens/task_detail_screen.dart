@@ -203,33 +203,47 @@ class TaskDetailScreen extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 24),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE5E5E5),
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    alignment: Alignment.center,
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'MARK AS COMPLETE',
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.0,
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.pop(
+                        context,
+                        true,
+                      ); // Return true to signify completion
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      decoration: BoxDecoration(
+                        color: task.isCompleted
+                            ? Colors.green
+                            : const Color(0xFFE5E5E5),
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      alignment: Alignment.center,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            task.isCompleted ? 'COMPLETED' : 'MARK AS COMPLETE',
+                            style: TextStyle(
+                              color: task.isCompleted
+                                  ? Colors.white
+                                  : Colors.black,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.0,
+                            ),
                           ),
-                        ),
-                        SizedBox(width: 8),
-                        Icon(
-                          Icons.check_circle_outline,
-                          color: Colors.black,
-                          size: 20,
-                        ),
-                      ],
+                          const SizedBox(width: 8),
+                          Icon(
+                            Icons.check_circle_outline,
+                            color: task.isCompleted
+                                ? Colors.white
+                                : Colors.black,
+                            size: 20,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],

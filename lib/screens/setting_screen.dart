@@ -10,7 +10,8 @@ class SettingScreen extends StatefulWidget {
 }
 
 class _SettingScreenState extends State<SettingScreen> {
-  bool _notificationsEnabled = false;
+  bool _notificationsEnabled = true;
+  bool _ringed = true;
   bool _darkModeEnabled = true;
 
   @override
@@ -63,7 +64,12 @@ class _SettingScreenState extends State<SettingScreen> {
                             _notificationsEnabled = value;
                           });
                         },
-                        activeColor: Colors.teal, // The track color when ON
+                        activeColor: const Color.fromARGB(
+                          194,
+                          43,
+                          203,
+                          11,
+                        ), // The track color when ON
                         trackColor:
                             AppColors.element, // The track color when OFF
                         thumbColor: Colors.white, // The circular knob color
@@ -71,6 +77,31 @@ class _SettingScreenState extends State<SettingScreen> {
                     ),
 
                     Divider(color: Colors.white.withOpacity(0.05), height: 1),
+
+                    _buildSettingsRow(
+                      icon: Icons.phonelink_ring_rounded,
+                      title: 'Ring',
+                      trailing: CupertinoSwitch(
+                        value: _ringed,
+                        onChanged: (value) {
+                          setState(() {
+                            _ringed = value;
+                          });
+                        },
+                        activeColor: const Color.fromARGB(
+                          194,
+                          43,
+                          203,
+                          11,
+                        ), // The track color when ON
+                        trackColor:
+                            AppColors.element, // The track color when OFF
+                        thumbColor: Colors.white, // The circular knob color
+                      ),
+                    ),
+
+                    Divider(color: Colors.white.withOpacity(0.05), height: 1),
+
                     _buildSettingsRow(
                       icon: Icons.my_library_books_outlined,
                       iconBgColor: Colors.white,

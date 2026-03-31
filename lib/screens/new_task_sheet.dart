@@ -23,15 +23,16 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
   List<String> _selectedReminders = [];
 
   final List<String> _reminderOptions = [
-    '5 minutes before',
-    '10 minutes before',
-    '20 minutes before',
-    '40 minutes before',
+    '5 min before',
+    '10 min before',
+    '20 min before',
+    '40 min before',
     '1 hour before',
     '2 hours before',
     '4 hours before',
+    '8 hours before',
+    '16 hours before',
     '1 day before',
-    'Custom...',
   ];
 
   void _openDatePicker(BuildContext btnContext) async {
@@ -76,149 +77,6 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
     }
   }
 
-  void _showCustomReminderDialog() {
-    final TextEditingController customValueController = TextEditingController();
-    String selectedUnit = 'minutes';
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              backgroundColor: AppColors.surface,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24),
-              ),
-              title: const Text(
-                'Custom Reminder',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              content: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: customValueController,
-                      keyboardType: TextInputType.number,
-                      style: const TextStyle(color: Colors.white, fontSize: 18),
-                      decoration: InputDecoration(
-                        hintText: 'e.g. 15',
-                        hintStyle: TextStyle(
-                          color: Colors.white.withOpacity(0.3),
-                        ),
-                        enabledBorder: const UnderlineInputBorder(
-                          borderSide: BorderSide(color: Colors.white24),
-                        ),
-                        focusedBorder: const UnderlineInputBorder(
-                          borderSide: BorderSide(color: Colors.white),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  DropdownButton<String>(
-                    value: selectedUnit,
-                    dropdownColor: AppColors.surface,
-                    style: const TextStyle(color: Colors.white, fontSize: 16),
-                    underline: const SizedBox(),
-                    icon: Icon(
-                      Icons.keyboard_arrow_down,
-                      color: Colors.white.withOpacity(0.7),
-                    ),
-                    items: ['minutes', 'hours', 'days'].map((String value) {
-                      return DropdownMenuItem<String>(
-                        value: value,
-                        child: Text(value),
-                      );
-                    }).toList(),
-                    onChanged: (newValue) {
-                      if (newValue != null) {
-                        setDialogState(() {
-                          selectedUnit = newValue;
-                        });
-                      }
-                    },
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text(
-                    'Cancel',
-                    style: TextStyle(color: Colors.white54),
-                  ),
-                ),
-                TextButton(
-                  onPressed: () {
-                    int? val = int.tryParse(customValueController.text.trim());
-                    if (val == null || val <= 0) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Please enter a valid number'),
-                        ),
-                      );
-                      return;
-                    }
-
-                    Duration requiredDuration;
-                    if (selectedUnit == 'minutes') {
-                      requiredDuration = Duration(minutes: val);
-                    } else if (selectedUnit == 'hours') {
-                      requiredDuration = Duration(hours: val);
-                    } else {
-                      requiredDuration = Duration(days: val);
-                    }
-
-                    Duration timeUntilDue = _selectedDateTime.difference(
-                      DateTime.now(),
-                    );
-
-                    if (timeUntilDue <= requiredDuration) {
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            'Task is due in less than $val $selectedUnit.',
-                          ),
-                          backgroundColor: Colors.redAccent,
-                        ),
-                      );
-                    } else {
-                      String displayUnit = val == 1
-                          ? selectedUnit.substring(0, selectedUnit.length - 1)
-                          : selectedUnit;
-
-                      String newReminder = '$val $displayUnit before';
-
-                      // List me add karein (Agar pehle se nahi hai)
-                      setState(() {
-                        if (!_selectedReminders.contains(newReminder)) {
-                          _selectedReminders.add(newReminder);
-                        }
-                      });
-                      Navigator.pop(context);
-                    }
-                  },
-                  child: const Text(
-                    'Save',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-
   void _showReminderPicker() {
     int tempSelectedIndex = 2; // Default to '20 minutes before'
 
@@ -250,12 +108,6 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
                       onTap: () {
                         String chosenOption =
                             _reminderOptions[tempSelectedIndex];
-
-                        if (chosenOption == 'Custom...') {
-                          Navigator.pop(context);
-                          _showCustomReminderDialog();
-                          return;
-                        }
 
                         Duration requiredDuration = Duration.zero;
                         if (chosenOption.contains('minute')) {

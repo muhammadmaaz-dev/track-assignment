@@ -39,6 +39,7 @@ dependencies:
   cupertino_calendar_picker: ^2.2.6
   flutter_localizations:
     sdk: flutter
+  shared_preferences: ^2.5.5
 
 dev_dependencies:
   flutter_test:
