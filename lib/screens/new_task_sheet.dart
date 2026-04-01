@@ -4,6 +4,7 @@ import 'package:assignment_tracker/theme/constants.dart';
 import 'package:cupertino_calendar_picker/cupertino_calendar_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 class NewTaskSheet extends StatefulWidget {
   const NewTaskSheet({super.key});
@@ -50,8 +51,11 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
     final DateTime? picked = await showCupertinoCalendarPicker(
       context,
       widgetRenderBox: renderBox,
-      initialDateTime: _selectedDateTime,
-      minimumDateTime: DateTime(2000),
+      initialDateTime: _selectedDateTime.isBefore(stableCurrentTime)
+          ? stableCurrentTime
+          : _selectedDateTime,
+      minimumDateTime:
+          stableCurrentTime, // Blocks past time selection directly in the UI
       maximumDateTime: DateTime(2100),
       mode: CupertinoCalendarMode.dateTime,
     );
@@ -61,13 +65,12 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
         setState(() {
           _selectedDateTime = stableCurrentTime;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Cannot select a past time. Adjusted to current time.',
-            ),
-            backgroundColor: Colors.redAccent,
-          ),
+        Fluttertoast.showToast(
+          msg: 'Cannot select a past time. Adjusted to current time.',
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          backgroundColor: Colors.redAccent,
+          textColor: Colors.white,
         );
       } else {
         setState(() {
@@ -130,13 +133,13 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
 
                         if (timeUntilDue <= requiredDuration) {
                           Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                'Cannot set this reminder. Task is due in less than ${chosenOption.replaceAll(' before', '')}.',
-                              ),
-                              backgroundColor: Colors.redAccent,
-                            ),
+                          Fluttertoast.showToast(
+                            msg:
+                                'Task is due in less than ${chosenOption.replaceAll(' before', '')}.',
+                            toastLength: Toast.LENGTH_SHORT,
+                            gravity: ToastGravity.BOTTOM,
+                            backgroundColor: Colors.redAccent,
+                            textColor: Colors.white,
                           );
                         } else {
                           // List me add karein (Agar pehle se nahi hai)
@@ -144,11 +147,12 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
                             if (!_selectedReminders.contains(chosenOption)) {
                               _selectedReminders.add(chosenOption);
                             } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Reminder already added!'),
-                                  backgroundColor: Colors.orange,
-                                ),
+                              Fluttertoast.showToast(
+                                msg: 'Reminder already added!',
+                                toastLength: Toast.LENGTH_SHORT,
+                                gravity: ToastGravity.BOTTOM,
+                                backgroundColor: Colors.orange,
+                                textColor: Colors.white,
                               );
                             }
                           });
@@ -531,10 +535,23 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
               child: ElevatedButton(
                 onPressed: () {
                   if (title.text.trim().isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Please enter a task title'),
-                      ),
+                    Fluttertoast.showToast(
+                      msg: 'Please enter a task title',
+                      toastLength: Toast.LENGTH_SHORT,
+                      gravity: ToastGravity.BOTTOM,
+                      backgroundColor: Colors.redAccent,
+                      textColor: Colors.white,
+                    );
+                    return;
+                  }
+
+                  if (_selectedDateTime.isBefore(DateTime.now())) {
+                    Fluttertoast.showToast(
+                      msg: 'Cannot save a task in the past.',
+                      toastLength: Toast.LENGTH_SHORT,
+                      gravity: ToastGravity.BOTTOM,
+                      backgroundColor: Colors.redAccent,
+                      textColor: Colors.white,
                     );
                     return;
                   }

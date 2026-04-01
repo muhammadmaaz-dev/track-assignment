@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import '../models/task_model.dart';
 import '../widgets/task_widgets.dart';
+import '../services/db_helper.dart';
 import 'new_task_sheet.dart';
 import 'task_detail_screen.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
+import 'dart:async';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -20,33 +20,44 @@ class _HomeScreenState extends State<HomeScreen> {
 
   List<Task> todaysFocusTasks = [];
   List<Task> upcomingTasks = [];
+  Timer? _refreshTimer;
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _loadTasks();
+    DatabaseHelper.instance.onDatabaseChanged.addListener(_onDbChanged);
+
+    _refreshTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
+      if (mounted) {
+        _organizetask();
+      }
+    });
+  }
+
+  void _onDbChanged() {
+    if (mounted) {
+      _loadTasks();
+    }
+  }
+
+  @override
+  void dispose() {
+    DatabaseHelper.instance.onDatabaseChanged.removeListener(_onDbChanged);
+    _refreshTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadTasks() async {
-    final prefs = await SharedPreferences.getInstance();
-    final String? tasksString = prefs.getString('saved_tasks');
-
-    if (tasksString != null) {
-      final List<dynamic> decodedTasks = jsonDecode(tasksString);
+    final tasks = await DatabaseHelper.instance.getAllTasks();
+    if (mounted) {
+      allTasks = tasks;
+      _organizetask(); // organize updates state and sets lists
       setState(() {
-        allTasks = decodedTasks.map((task) => Task.fromJson(task)).toList();
+        _isLoading = false;
       });
     }
-    _organizetask(); // Organize after loading
-  }
-
-  // 4. NAYA LOGIC: Save tasks to SharedPreferences
-  Future<void> _saveTasks() async {
-    final prefs = await SharedPreferences.getInstance();
-    final String encodedTasks = jsonEncode(
-      allTasks.map((t) => t.toJson()).toList(),
-    );
-    await prefs.setString('saved_tasks', encodedTasks);
   }
 
   void _organizetask() {
@@ -80,17 +91,16 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {});
   }
 
-  void _deleteTask(Task task) {
-    setState(() {
-      // Remove the task from the main list using its unique ID
-      allTasks.removeWhere((t) => t.id == task.id);
-    });
-
-    // Save the updated list to local storage
-    _saveTasks();
-
-    // Reorganize the Today and Upcoming lists
-    _organizetask();
+  void _deleteTask(Task task) async {
+    await DatabaseHelper.instance.deleteTask(task.id);
+    if (mounted) {
+      setState(() {
+        // Remove the task from the main list using its unique ID
+        allTasks.removeWhere((t) => t.id == task.id);
+      });
+      // Reorganize the Today and Upcoming lists
+      _organizetask();
+    }
   }
 
   void _showTaskActionSheet(BuildContext context, Task task) {
@@ -147,20 +157,24 @@ class _HomeScreenState extends State<HomeScreen> {
 
             // 3. Agar user ne task add kiya hai (cancel nahi kiya) to list me daal dein
             if (newTask != null) {
-              setState(() {
-                allTasks.add(newTask); // Main list me add karein
-                _organizetask(); // Dobara sort aur filter karein
-              });
-              _saveTasks();
+              await DatabaseHelper.instance.insertTask(newTask);
+              if (mounted) {
+                setState(() {
+                  allTasks.add(newTask); // Main list me add karein
+                  _organizetask(); // Dobara sort aur filter karein
+                });
+              }
             }
           },
           backgroundColor: Colors.white,
-          child: const Icon(Icons.add, color: Colors.black),
           shape: const CircleBorder(),
+          child: const Icon(Icons.add, color: Colors.black),
         ),
       ),
       body: SafeArea(
-        child: allTasks.isEmpty
+        child: _isLoading
+            ? const SizedBox.shrink() // Prevents UI flicker while initial DB query is happening
+            : allTasks.isEmpty
             ? Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -246,18 +260,25 @@ class _HomeScreenState extends State<HomeScreen> {
 
                             if (result == true) {
                               // Task was marked as completed
-                              setState(() {
-                                final index = allTasks.indexWhere(
-                                  (t) => t.id == originalTask.id,
+                              final index = allTasks.indexWhere(
+                                (t) => t.id == originalTask.id,
+                              );
+                              if (index != -1) {
+                                final updatedTask = allTasks[index].copyWith(
+                                  isCompleted: true,
                                 );
-                                if (index != -1) {
-                                  allTasks[index] = allTasks[index].copyWith(
-                                    isCompleted: true,
-                                  );
+                                await DatabaseHelper.instance.updateTask(
+                                  updatedTask,
+                                );
+                                if (mounted) {
+                                  setState(() {
+                                    allTasks[index] = updatedTask;
+                                  });
                                 }
-                              });
-                              _saveTasks();
-                              _organizetask();
+                              }
+                              if (mounted) {
+                                _organizetask();
+                              }
                             }
                           },
                           onLongPress: () {
@@ -300,18 +321,26 @@ class _HomeScreenState extends State<HomeScreen> {
                             );
 
                             if (result == true) {
-                              setState(() {
-                                final originalId = upcomingTasks[index].id;
-                                final allIndex = allTasks.indexWhere(
-                                  (t) => t.id == originalId,
+                              final originalId = upcomingTasks[index].id;
+                              final allIndex = allTasks.indexWhere(
+                                (t) => t.id == originalId,
+                              );
+                              if (allIndex != -1) {
+                                final updatedTask = allTasks[allIndex].copyWith(
+                                  isCompleted: true,
                                 );
-                                if (allIndex != -1) {
-                                  allTasks[allIndex] = allTasks[allIndex]
-                                      .copyWith(isCompleted: true);
+                                await DatabaseHelper.instance.updateTask(
+                                  updatedTask,
+                                );
+                                if (mounted) {
+                                  setState(() {
+                                    allTasks[allIndex] = updatedTask;
+                                  });
                                 }
-                              });
-                              _saveTasks();
-                              _organizetask();
+                              }
+                              if (mounted) {
+                                _organizetask();
+                              }
                             }
                           },
                           onLongPress: () {

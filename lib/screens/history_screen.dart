@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
 import 'package:intl/intl.dart';
 import '../models/task_model.dart';
 import 'task_detail_screen.dart';
+import '../services/db_helper.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
@@ -21,45 +20,44 @@ class _HistoryScreenState extends State<HistoryScreen> {
   void initState() {
     super.initState();
     _loadHistoryTasks();
+    DatabaseHelper.instance.onDatabaseChanged.addListener(_onDbChanged);
+  }
+
+  void _onDbChanged() {
+    if (mounted) {
+      _loadHistoryTasks();
+    }
+  }
+
+  @override
+  void dispose() {
+    DatabaseHelper.instance.onDatabaseChanged.removeListener(_onDbChanged);
+    super.dispose();
   }
 
   Future<void> _loadHistoryTasks() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final String? tasksString = prefs.getString('saved_tasks');
+      final allTasks = await DatabaseHelper.instance.getAllTasks();
 
-      if (tasksString != null) {
-        final List<dynamic> decodedTasks = jsonDecode(tasksString);
-        final allTasks = decodedTasks
-            .map((task) => Task.fromJson(task as Map<String, dynamic>))
-            .toList();
+      final now = DateTime.now();
 
-        final now = DateTime.now();
+      if (mounted) {
+        setState(() {
+          allHistoryTasks = allTasks.where((task) {
+            bool isPastDue =
+                task.dueDate.isBefore(now) &&
+                !(task.dueDate.year == now.year &&
+                    task.dueDate.month == now.month &&
+                    task.dueDate.day == now.day);
+            // Make sure overdue only counts strictly past days, or just use isBefore(now).
+            // Since home screen uses isBefore(now) to still show today's tasks if not past the exact time.
+            return task.isCompleted || task.dueDate.isBefore(now);
+          }).toList();
 
-        if (mounted) {
-          setState(() {
-            allHistoryTasks = allTasks.where((task) {
-              bool isPastDue =
-                  task.dueDate.isBefore(now) &&
-                  !(task.dueDate.year == now.year &&
-                      task.dueDate.month == now.month &&
-                      task.dueDate.day == now.day);
-              // Make sure overdue only counts strictly past days, or just use isBefore(now).
-              // Since home screen uses isBefore(now) to still show today's tasks if not past the exact time.
-              return task.isCompleted || task.dueDate.isBefore(now);
-            }).toList();
-
-            // Sort newest first
-            allHistoryTasks.sort((a, b) => b.dueDate.compareTo(a.dueDate));
-            _isLoading = false;
-          });
-        }
-      } else {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
-        }
+          // Sort newest first
+          allHistoryTasks.sort((a, b) => b.dueDate.compareTo(a.dueDate));
+          _isLoading = false;
+        });
       }
     } catch (e) {
       debugPrint('Error loading history tasks: $e');
@@ -175,12 +173,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
             // Archive List
             _isLoading
-                ? const Padding(
-                    padding: EdgeInsets.all(40.0),
-                    child: Center(
-                      child: CircularProgressIndicator(color: Colors.white),
-                    ),
-                  )
+                ? const SizedBox.shrink() // Prevents flicker
                 : _filteredTasks.isEmpty
                 ? const Padding(
                     padding: EdgeInsets.all(40.0),

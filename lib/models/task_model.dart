@@ -41,31 +41,29 @@ class Task {
     );
   }
 
-  // Convert a Task into a Map (for saving)
-  Map<String, dynamic> toJson() {
+  Map<String, dynamic> toMap() {
     return {
       'id': id,
       'title': title,
       'type': type,
       'dueDate': dueDate.toIso8601String(),
       'timeString': timeString,
-      'isHighPriority': isHighPriority,
+      'isHighPriority': isHighPriority ? 1 : 0,
       'description': description,
-      'isCompleted': isCompleted,
+      'isCompleted': isCompleted ? 1 : 0,
     };
   }
 
-  // Extract a Task object from a Map (for loading)
-  factory Task.fromJson(Map<String, dynamic> json) {
+  factory Task.fromMap(Map<String, dynamic> map) {
     return Task(
-      id: json['id'],
-      title: json['title'],
-      type: json['type'],
-      dueDate: DateTime.parse(json['dueDate']),
-      timeString: json['timeString'],
-      isHighPriority: json['isHighPriority'] ?? false,
-      description: json['description'],
-      isCompleted: json['isCompleted'] ?? false,
+      id: map['id'],
+      title: map['title'],
+      type: map['type'],
+      dueDate: DateTime.parse(map['dueDate']),
+      timeString: map['timeString'],
+      isHighPriority: map['isHighPriority'] == 1,
+      description: map['description'],
+      isCompleted: map['isCompleted'] == 1,
     );
   }
 }
