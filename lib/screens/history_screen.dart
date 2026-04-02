@@ -138,7 +138,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 children: [
                   Expanded(
                     child: _buildStatCard(
-                      title: 'SUCCESS RATE',
+                      title: 'Success Rate',
                       value: '${_calculateSuccessRate().toInt()}%',
                       icon: Icons.trending_up,
                     ),
@@ -146,7 +146,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   const SizedBox(width: 16),
                   Expanded(
                     child: _buildStatCard(
-                      title: 'ASSIGNMENTS',
+                      title: 'Tasks',
                       value: '${allHistoryTasks.length}',
                       icon: Icons.inventory_2_outlined,
                     ),
@@ -245,7 +245,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                             ),
                           );
                         }).toList(),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 80),
                       ],
                     ),
                   ),
@@ -300,7 +300,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
             title,
             style: const TextStyle(
               color: Colors.grey,
-              fontSize: 10,
+              fontSize: 16,
               fontWeight: FontWeight.bold,
               letterSpacing: 1.5,
             ),

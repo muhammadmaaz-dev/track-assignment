@@ -39,9 +39,12 @@ class DatabaseHelper {
         timeString TEXT,
         isHighPriority INTEGER NOT NULL,
         description TEXT,
-        isCompleted INTEGER NOT NULL
+        isCompleted INTEGER NOT NULL,
+        reminders TEXT,
+        attachmentPaths TEXT
       )
     ''');
+    // NAYA CODE: 'reminders TEXT' add kar diya gaya hai
   }
 
   Future<void> insertTask(Task task) async {

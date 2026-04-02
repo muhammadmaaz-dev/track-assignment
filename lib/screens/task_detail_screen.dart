@@ -1,18 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:assignment_tracker/theme/constants.dart';
+import 'package:open_filex/open_filex.dart';
 import '../models/task_model.dart';
 import 'package:intl/intl.dart';
+import '../services/db_helper.dart'; // NEW IMPORT
+import 'new_task_sheet.dart'; // NEW IMPORT
 
-class TaskDetailScreen extends StatelessWidget {
+class TaskDetailScreen extends StatefulWidget {
   final Task task;
 
   const TaskDetailScreen({Key? key, required this.task}) : super(key: key);
 
   @override
+  State<TaskDetailScreen> createState() => _TaskDetailScreenState();
+}
+
+class _TaskDetailScreenState extends State<TaskDetailScreen> {
+  late Task currentTask;
+
+  @override
+  void initState() {
+    super.initState();
+    // Start by showing the task passed from the Home Screen
+    currentTask = widget.task;
+  }
+
+  @override
   Widget build(BuildContext context) {
     // --- 1. REAL-TIME CALCULATIONS START ---
     final now = DateTime.now();
-    final difference = task.dueDate.difference(now);
+    final difference = currentTask.dueDate.difference(
+      now,
+    ); // Updated to currentTask
 
     String val1 = '';
     String unit1 = '';
@@ -68,7 +87,29 @@ class TaskDetailScreen extends StatelessWidget {
         centerTitle: true,
         actions: [
           TextButton(
-            onPressed: () {},
+            onPressed: () async {
+              // 1. Open the NewTaskSheet and pass the current task
+              final Task? updatedTask = await showModalBottomSheet<Task>(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                useSafeArea: true,
+                builder: (context) => NewTaskSheet(taskToEdit: currentTask),
+              );
+
+              // 2. If the user saved changes (didn't cancel)
+              if (updatedTask != null) {
+                // Save the updated data directly to the database
+                await DatabaseHelper.instance.updateTask(updatedTask);
+
+                // Refresh this detail screen instantly
+                if (mounted) {
+                  setState(() {
+                    currentTask = updatedTask;
+                  });
+                }
+              }
+            },
             child: const Text(
               'EDIT',
               style: TextStyle(
@@ -100,7 +141,7 @@ class TaskDetailScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    task.type.toUpperCase(),
+                    currentTask.type.toUpperCase(),
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 10,
@@ -110,7 +151,7 @@ class TaskDetailScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-                if (task.isHighPriority)
+                if (currentTask.isHighPriority)
                   const Text(
                     'URGENT',
                     style: TextStyle(
@@ -126,7 +167,7 @@ class TaskDetailScreen extends StatelessWidget {
 
             // Title
             Text(
-              task.title,
+              currentTask.title,
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 32,
@@ -147,7 +188,8 @@ class TaskDetailScreen extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Due ${DateFormat('MMM d, yyyy').format(task.dueDate)}',
+                  // Updated format: Day, Month Date, Year • Time
+                  'Due ${DateFormat('EEEE, MMM d, yyyy • h:mm a').format(currentTask.dueDate)}',
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.7),
                     fontSize: 14,
@@ -174,10 +216,8 @@ class TaskDetailScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            // <-- REMOVE 'const' keyword here
-                            currentStatus, // <-- USE DYNAMIC VARIABLE
+                            currentStatus,
                             style: TextStyle(
-                              // <-- REMOVE 'const' keyword here
                               color: currentStatus == 'Overdue'
                                   ? Colors.redAccent
                                   : Colors.white,
@@ -214,7 +254,7 @@ class TaskDetailScreen extends StatelessWidget {
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       decoration: BoxDecoration(
-                        color: task.isCompleted
+                        color: currentTask.isCompleted
                             ? Colors.green
                             : const Color(0xFFE5E5E5),
                         borderRadius: BorderRadius.circular(30),
@@ -224,9 +264,11 @@ class TaskDetailScreen extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            task.isCompleted ? 'COMPLETED' : 'MARK AS COMPLETE',
+                            currentTask.isCompleted
+                                ? 'COMPLETED'
+                                : 'MARK AS COMPLETE',
                             style: TextStyle(
-                              color: task.isCompleted
+                              color: currentTask.isCompleted
                                   ? Colors.white
                                   : Colors.black,
                               fontSize: 14,
@@ -237,7 +279,7 @@ class TaskDetailScreen extends StatelessWidget {
                           const SizedBox(width: 8),
                           Icon(
                             Icons.check_circle_outline,
-                            color: task.isCompleted
+                            color: currentTask.isCompleted
                                 ? Colors.white
                                 : Colors.black,
                             size: 20,
@@ -274,12 +316,10 @@ class TaskDetailScreen extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 8),
-                        // Inside the TIME LEFT container:
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.baseline,
                           textBaseline: TextBaseline.alphabetic,
                           children: [
-                            // FIRST BIG NUMBER
                             Text(
                               val1,
                               style: const TextStyle(
@@ -290,7 +330,6 @@ class TaskDetailScreen extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(width: 4),
-                            // FIRST SMALL TEXT
                             Text(
                               unit1,
                               style: TextStyle(
@@ -299,10 +338,8 @@ class TaskDetailScreen extends StatelessWidget {
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
-
-                            // SECOND BIG NUMBER & TEXT (Only shows if there is a remainder)
                             if (val2.isNotEmpty) ...[
-                              const SizedBox(width: 12), // Space between groups
+                              const SizedBox(width: 12),
                               Text(
                                 val2,
                                 style: const TextStyle(
@@ -377,13 +414,14 @@ class TaskDetailScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Container(
+              width: double.infinity,
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
                 color: AppColors.surface,
                 borderRadius: BorderRadius.circular(24),
               ),
               child: Text(
-                task.description ?? 'No description provided.',
+                currentTask.description ?? 'No description provided.',
                 style: TextStyle(
                   color: Colors.white.withOpacity(0.8),
                   fontSize: 15,
@@ -393,7 +431,7 @@ class TaskDetailScreen extends StatelessWidget {
             ),
             const SizedBox(height: 32),
 
-            // Attachments
+            // Attachments Header
             const Text(
               'Attachments',
               style: TextStyle(
@@ -403,89 +441,87 @@ class TaskDetailScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            _buildAttachmentItem(
-              icon: Icons.picture_as_pdf_outlined,
-              title: 'Integration_Review.pdf',
-              subtitle: '2.4 MB • PDF Document',
-            ),
-            const SizedBox(height: 12),
-            _buildAttachmentItem(
-              icon: Icons.image_outlined,
-              title: 'Equation_Sheet_v2.jpg',
-              subtitle: '850 KB • Image',
+
+            // Dynamic Attachments List
+            Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(24),
+              ),
+              padding: const EdgeInsets.all(20),
+              child:
+                  (currentTask.attachmentPaths == null ||
+                      currentTask.attachmentPaths!.isEmpty)
+                  ? Text(
+                      'No attachments provided.',
+                      style: TextStyle(color: Colors.white.withOpacity(0.5)),
+                    )
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: currentTask.attachmentPaths!.map((filePath) {
+                        String fileName = filePath.split('/').last;
+                        String extension = fileName
+                            .split('.')
+                            .last
+                            .toLowerCase();
+
+                        IconData icon = Icons.insert_drive_file_outlined;
+                        if (extension == 'pdf')
+                          icon = Icons.picture_as_pdf_outlined;
+                        if (['jpg', 'jpeg', 'png'].contains(extension))
+                          icon = Icons.image_outlined;
+
+                        return GestureDetector(
+                          onTap: () async {
+                            await OpenFilex.open(filePath);
+                          },
+                          child: Container(
+                            margin: const EdgeInsets.only(bottom: 8.0),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 12,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.05),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(icon, color: Colors.white, size: 18),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    fileName,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 14,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Icon(
+                                  Icons.open_in_new,
+                                  color: Colors.white.withOpacity(0.5),
+                                  size: 18,
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
             ),
             const SizedBox(height: 32),
 
-            // Checklist
-            const Text(
-              'Checklist',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            _buildChecklistItem('Review Lecture 12 Notes', true),
-            const SizedBox(height: 16),
-            _buildChecklistItem('Complete Problem Set Draft', false),
-            const SizedBox(height: 16),
-            _buildChecklistItem('Proofread Final Submission', false),
-
-            const SizedBox(height: 48), // Bottom padding
+            const SizedBox(height: 48),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildAttachmentItem({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: Colors.white, size: 20),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.6),
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Icon(Icons.open_in_new, color: Colors.white, size: 20),
-        ],
       ),
     );
   }

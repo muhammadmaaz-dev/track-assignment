@@ -29,7 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadTasks();
     DatabaseHelper.instance.onDatabaseChanged.addListener(_onDbChanged);
 
-    _refreshTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
+    _refreshTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
       if (mounted) {
         _organizetask();
       }
@@ -111,9 +111,36 @@ class _HomeScreenState extends State<HomeScreen> {
         message: Text(task.title),
         actions: <CupertinoActionSheetAction>[
           CupertinoActionSheetAction(
-            onPressed: () {
-              Navigator.pop(context);
-              // TODO: Implement edit functionality
+            // 1. Make this onPressed async
+            onPressed: () async {
+              Navigator.pop(context); // Close the Cupertino action sheet first
+
+              // 2. Open the NewTaskSheet and pass the selected task to edit
+              final Task? updatedTask = await showModalBottomSheet<Task>(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                useSafeArea: true,
+                builder: (context) => NewTaskSheet(taskToEdit: task),
+              );
+
+              // 3. If the user saved changes, update the DB and UI
+              if (updatedTask != null) {
+                await DatabaseHelper.instance.updateTask(updatedTask);
+
+                if (mounted) {
+                  setState(() {
+                    // Find the old task in the master list and replace it
+                    final index = allTasks.indexWhere(
+                      (t) => t.id == updatedTask.id,
+                    );
+                    if (index != -1) {
+                      allTasks[index] = updatedTask;
+                    }
+                    _organizetask(); // Re-sort and filter lists
+                  });
+                }
+              }
             },
             child: const Text('Edit'),
           ),
@@ -173,8 +200,9 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: SafeArea(
         child: _isLoading
-            ? const SizedBox.shrink() // Prevents UI flicker while initial DB query is happening
-            : allTasks.isEmpty
+            ? const SizedBox.shrink()
+            : (todaysFocusTasks.isEmpty &&
+                  upcomingTasks.isEmpty) // <--- Updated line
             ? Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,

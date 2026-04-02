@@ -7,6 +7,8 @@ class Task {
   final bool isHighPriority;
   final String? description;
   final bool isCompleted;
+  final List<String> reminders;
+  final List<String>? attachmentPaths;
 
   Task({
     required this.id,
@@ -17,6 +19,8 @@ class Task {
     this.isHighPriority = false,
     this.description,
     this.isCompleted = false,
+    this.reminders = const [],
+    this.attachmentPaths,
   });
 
   Task copyWith({
@@ -28,6 +32,8 @@ class Task {
     bool? isHighPriority,
     String? description,
     bool? isCompleted,
+    List<String>? reminders,
+    List<String>? attachmentPaths,
   }) {
     return Task(
       id: id ?? this.id,
@@ -38,6 +44,8 @@ class Task {
       isHighPriority: isHighPriority ?? this.isHighPriority,
       description: description ?? this.description,
       isCompleted: isCompleted ?? this.isCompleted,
+      reminders: reminders ?? this.reminders,
+      attachmentPaths: attachmentPaths ?? this.attachmentPaths,
     );
   }
 
@@ -51,6 +59,8 @@ class Task {
       'isHighPriority': isHighPriority ? 1 : 0,
       'description': description,
       'isCompleted': isCompleted ? 1 : 0,
+      'reminders': reminders.join(','),
+      'attachmentPaths': attachmentPaths?.join(','),
     };
   }
 
@@ -64,6 +74,15 @@ class Task {
       isHighPriority: map['isHighPriority'] == 1,
       description: map['description'],
       isCompleted: map['isCompleted'] == 1,
+      reminders:
+          map['reminders'] != null && map['reminders'].toString().isNotEmpty
+          ? map['reminders'].toString().split(',')
+          : [],
+      attachmentPaths:
+          map['attachmentPaths'] != null &&
+              map['attachmentPaths'].toString().isNotEmpty
+          ? map['attachmentPaths'].toString().split(',')
+          : [],
     );
   }
 }

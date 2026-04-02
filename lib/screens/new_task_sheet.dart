@@ -1,13 +1,19 @@
+import 'dart:ui'; // Required for ImageFilter.blur
+import 'package:file_picker/file_picker.dart'; // Required to pick files
 import 'package:assignment_tracker/models/task_model.dart';
+import 'package:assignment_tracker/services/notification_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:assignment_tracker/theme/constants.dart';
 import 'package:cupertino_calendar_picker/cupertino_calendar_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:open_filex/open_filex.dart';
 
 class NewTaskSheet extends StatefulWidget {
-  const NewTaskSheet({super.key});
+  final Task? taskToEdit;
+
+  const NewTaskSheet({super.key, this.taskToEdit});
 
   @override
   State<NewTaskSheet> createState() => _NewTaskSheetState();
@@ -20,8 +26,10 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
 
   DateTime _selectedDateTime = DateTime.now();
 
-  // NAYA LOGIC: Single string ki jagah humne ek List bana di hai
   List<String> _selectedReminders = [];
+
+  // NEW: Store selected file paths before creating the task
+  List<String> _attachmentPaths = [];
 
   final List<String> _reminderOptions = [
     '5 min before',
@@ -35,6 +43,55 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
     '16 hours before',
     '1 day before',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+
+    // If we passed a task, pre-fill all the fields!
+    if (widget.taskToEdit != null) {
+      final t = widget.taskToEdit!;
+      title.text = t.title;
+      description.text = t.description ?? '';
+
+      // Match the type back to the UI segments
+      if (t.type.toUpperCase() == 'ASSIGNMENT')
+        _selectedType = 'Assignment';
+      else if (t.type.toUpperCase() == 'QUIZ')
+        _selectedType = 'Quiz';
+      else if (t.type.toUpperCase() == 'PROJECT')
+        _selectedType = 'Project';
+      else
+        _selectedType = t.type;
+
+      _selectedDateTime = t.dueDate;
+
+      if (t.reminders != null) {
+        _selectedReminders = List.from(t.reminders!);
+      }
+      if (t.attachmentPaths != null) {
+        _attachmentPaths = List.from(t.attachmentPaths!);
+      }
+    }
+  }
+
+  // NEW: Method to pick files
+  Future<void> _pickFiles() async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      allowMultiple: true,
+    );
+
+    if (result != null) {
+      setState(() {
+        List<String> validPaths = result.paths.whereType<String>().toList();
+        for (var path in validPaths) {
+          if (!_attachmentPaths.contains(path)) {
+            _attachmentPaths.add(path);
+          }
+        }
+      });
+    }
+  }
 
   void _openDatePicker(BuildContext btnContext) async {
     final RenderBox? renderBox = btnContext.findRenderObject() as RenderBox?;
@@ -54,8 +111,7 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
       initialDateTime: _selectedDateTime.isBefore(stableCurrentTime)
           ? stableCurrentTime
           : _selectedDateTime,
-      minimumDateTime:
-          stableCurrentTime, // Blocks past time selection directly in the UI
+      minimumDateTime: stableCurrentTime,
       maximumDateTime: DateTime(2100),
       mode: CupertinoCalendarMode.dateTime,
     );
@@ -142,7 +198,6 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
                             textColor: Colors.white,
                           );
                         } else {
-                          // List me add karein (Agar pehle se nahi hai)
                           setState(() {
                             if (!_selectedReminders.contains(chosenOption)) {
                               _selectedReminders.add(chosenOption);
@@ -361,62 +416,153 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
                   ),
                   const SizedBox(height: 24),
 
-                  Container(
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(25),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 16,
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.black,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.1),
+                  GestureDetector(
+                    onTap:
+                        _pickFiles, // Now the ENTIRE container opens the file picker
+                    behavior: HitTestBehavior
+                        .opaque, // Ensures tapping on empty space works
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 16,
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.black,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.1),
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.attach_file,
+                              color: Colors.white,
+                              size: 20,
                             ),
                           ),
-                          child: const Icon(
-                            Icons.attach_file,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Attach File',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Attachments',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'PDF, JPG, or DOCX (Max 20MB)',
-                                style: TextStyle(
-                                  color: Colors.white.withOpacity(0.6),
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
+                                const SizedBox(height: 12),
+
+                                // Dynamic Attachments List with Cross Buttons
+                                if (_attachmentPaths.isEmpty)
+                                  Text(
+                                    'Tap anywhere to add files', // Updated UX text
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.5),
+                                    ),
+                                  )
+                                else
+                                  ..._attachmentPaths.map((filePath) {
+                                    String fileName = filePath.split('/').last;
+                                    String extension = fileName
+                                        .split('.')
+                                        .last
+                                        .toLowerCase();
+
+                                    IconData icon =
+                                        Icons.insert_drive_file_outlined;
+                                    if (extension == 'pdf')
+                                      icon = Icons.picture_as_pdf_outlined;
+                                    if ([
+                                      'jpg',
+                                      'jpeg',
+                                      'png',
+                                    ].contains(extension))
+                                      icon = Icons.image_outlined;
+
+                                    return Container(
+                                      margin: const EdgeInsets.only(
+                                        bottom: 8.0,
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 10,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.black.withOpacity(
+                                          0.2,
+                                        ), // Dark inset background
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(
+                                          color: Colors.white.withOpacity(0.05),
+                                        ),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            icon,
+                                            color: Colors.white,
+                                            size: 18,
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Text(
+                                              fileName,
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 14,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          // Cross button to remove the attachment
+                                          GestureDetector(
+                                            onTap: () {
+                                              setState(() {
+                                                _attachmentPaths.remove(
+                                                  filePath,
+                                                );
+                                              });
+                                            },
+                                            child: Container(
+                                              color: Colors
+                                                  .transparent, // Increases touch target size
+                                              padding: const EdgeInsets.all(
+                                                4.0,
+                                              ),
+                                              child: Icon(
+                                                Icons.close,
+                                                color: Colors.white.withOpacity(
+                                                  0.5,
+                                                ),
+                                                size: 20,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  }).toList(),
+                              ],
+                            ),
                           ),
-                        ),
-                        Icon(Icons.add, color: Colors.white.withOpacity(0.5)),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 32),
-
+                  const SizedBox(height: 24),
                   Divider(color: Colors.white.withOpacity(0.1), height: 1),
                   const SizedBox(height: 24),
 
@@ -456,7 +602,6 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
                   ),
                   const SizedBox(height: 24),
 
-                  // DYNAMIC LIST RENDERER FOR MULTIPLE REMINDERS
                   _selectedReminders.isEmpty
                       ? Center(
                           child: Text(
@@ -556,14 +701,32 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
                     return;
                   }
 
-                  Task userCreatedTask = Task(
-                    id: DateTime.now().millisecondsSinceEpoch.toString(),
-                    title: title.text.trim(),
-                    type: _selectedType.toUpperCase(),
-                    dueDate: _selectedDateTime,
-                    description: description.text.trim(),
-                    // Reminders list save karni ho toh aapko apne Task model mein add karna padega pehle
-                  );
+                  Task userCreatedTask;
+
+                  // If editing, use copyWith to preserve the ID and other original states
+                  if (widget.taskToEdit != null) {
+                    userCreatedTask = widget.taskToEdit!.copyWith(
+                      title: title.text.trim(),
+                      type: _selectedType.toUpperCase(),
+                      dueDate: _selectedDateTime,
+                      description: description.text.trim(),
+                      reminders: _selectedReminders,
+                      attachmentPaths: _attachmentPaths,
+                    );
+                  } else {
+                    // Create brand new task
+                    userCreatedTask = Task(
+                      id: DateTime.now().millisecondsSinceEpoch.toString(),
+                      title: title.text.trim(),
+                      type: _selectedType.toUpperCase(),
+                      dueDate: _selectedDateTime,
+                      description: description.text.trim(),
+                      reminders: _selectedReminders,
+                      attachmentPaths: _attachmentPaths,
+                    );
+                  }
+
+                  NotificationHelper.scheduleTaskNotifications(userCreatedTask);
 
                   Navigator.pop(context, userCreatedTask);
                 },
@@ -575,9 +738,13 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
                   ),
                   elevation: 0,
                 ),
-                child: const Text(
-                  'Save Task',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                child: Text(
+                  // Dynamically changes button text!
+                  widget.taskToEdit != null ? 'Update Task' : 'Save Task',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),
@@ -666,6 +833,79 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
             ),
             Icon(Icons.chevron_right, color: Colors.white.withOpacity(0.5)),
           ],
+        ),
+      ),
+    );
+  }
+
+  // Moved inside the State class so it can be used properly
+  Widget _buildAttachmentItem({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+  }) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.08),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.12),
+              width: 0.5,
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(icon, color: Colors.white, size: 22),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: -0.3,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.6),
+                        fontSize: 13,
+                        letterSpacing: -0.1,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                color: Colors.white.withOpacity(0.3),
+                size: 16,
+              ),
+            ],
+          ),
         ),
       ),
     );
