@@ -258,498 +258,510 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.92,
-      decoration: const BoxDecoration(
-        color: AppColors.background,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(24),
-          topRight: Radius.circular(24),
-        ),
-      ),
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                GestureDetector(
-                  onTap: () => Navigator.pop(context),
-                  child: const Row(
-                    children: [
-                      Icon(Icons.chevron_left, color: Colors.white, size: 28),
-                    ],
-                  ),
-                ),
-                const Text(
-                  'New Task',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () {
-                    Navigator.pop(context);
-                  },
-                  child: const Text(
-                    'Cancel',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+    return Material(
+      color: Colors.transparent,
+      child: Container(
+        // Keep height somewhat shorter to visually show it's a sheet,
+        // the cupertino modal sheet already leaves a gap naturally.
+        height: MediaQuery.of(context).size.height * 0.92,
+        decoration: const BoxDecoration(
+          color: AppColors.background,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(24),
+            topRight: Radius.circular(24),
           ),
-          Divider(color: Colors.white.withOpacity(0.1), height: 1),
-
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+        ),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  TextField(
-                    controller: title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    decoration: InputDecoration(
-                      hintText: 'Enter task title',
-                      hintStyle: TextStyle(
-                        color: Colors.white.withOpacity(0.2),
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      border: InputBorder.none,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  Container(
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(25),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(4.0),
-                      child: Row(
-                        children: [
-                          _buildTypeSegment('Assignment'),
-                          _buildTypeSegment('Quiz'),
-                          _buildTypeSegment('Project'),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  Builder(
-                    builder: (btnContext) {
-                      return _buildActionCard(
-                        icon: Icons.calendar_today_outlined,
-                        label: 'Due Date',
-                        value: DateFormat(
-                          'MMM d, yyyy - h:mm a',
-                        ).format(_selectedDateTime),
-                        onTap: () => _openDatePicker(btnContext),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 24),
-
-                  Container(
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: const Row(
                       children: [
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.notes,
-                              color: Colors.white.withOpacity(0.7),
-                              size: 20,
-                            ),
-                            const SizedBox(width: 12),
-                            Text(
-                              'NOTES / QUESTIONS',
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.7),
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1.2,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        TextField(
-                          controller: description,
-                          maxLines: 4,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                          ),
-                          decoration: InputDecoration(
-                            hintText: 'Add questions or notes',
-                            hintStyle: TextStyle(
-                              color: Colors.white.withOpacity(0.3),
-                              fontSize: 16,
-                            ),
-                            border: InputBorder.none,
-                          ),
-                        ),
+                        Icon(Icons.chevron_left, color: Colors.white, size: 28),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 24),
-
+                  const Text(
+                    'New Task',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                   GestureDetector(
-                    onTap:
-                        _pickFiles, // Now the ENTIRE container opens the file picker
-                    behavior: HitTestBehavior
-                        .opaque, // Ensures tapping on empty space works
-                    child: Container(
+                    onTap: () {
+                      Navigator.pop(context);
+                    },
+                    child: const Text(
+                      'Cancel',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Divider(color: Colors.white.withOpacity(0.1), height: 1),
+
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextField(
+                      controller: title,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: 'Enter task title',
+                        hintStyle: TextStyle(
+                          color: Colors.white.withOpacity(0.2),
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        border: InputBorder.none,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    Container(
+                      height: 50,
                       decoration: BoxDecoration(
                         color: AppColors.surface,
                         borderRadius: BorderRadius.circular(25),
                       ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 16,
+                      child: Padding(
+                        padding: const EdgeInsets.all(4.0),
+                        child: Row(
+                          children: [
+                            _buildTypeSegment('Assignment'),
+                            _buildTypeSegment('Quiz'),
+                            _buildTypeSegment('Project'),
+                          ],
+                        ),
                       ),
-                      child: Row(
+                    ),
+                    const SizedBox(height: 24),
+
+                    Builder(
+                      builder: (btnContext) {
+                        return _buildActionCard(
+                          icon: Icons.calendar_today_outlined,
+                          label: 'Due Date',
+                          value: DateFormat(
+                            'MMM d, yyyy - h:mm a',
+                          ).format(_selectedDateTime),
+                          onTap: () => _openDatePicker(btnContext),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 24),
+
+                    Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Colors.black,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: Colors.white.withOpacity(0.1),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.notes,
+                                color: Colors.white.withOpacity(0.7),
+                                size: 20,
                               ),
-                            ),
-                            child: const Icon(
-                              Icons.attach_file,
-                              color: Colors.white,
-                              size: 20,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Attachments',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                              const SizedBox(width: 12),
+                              Text(
+                                'NOTES / QUESTIONS',
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.7),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1.2,
                                 ),
-                                const SizedBox(height: 12),
-
-                                // Dynamic Attachments List with Cross Buttons
-                                if (_attachmentPaths.isEmpty)
-                                  Text(
-                                    'Tap anywhere to add files', // Updated UX text
-                                    style: TextStyle(
-                                      color: Colors.white.withOpacity(0.5),
-                                    ),
-                                  )
-                                else
-                                  ..._attachmentPaths.map((filePath) {
-                                    String fileName = filePath.split('/').last;
-                                    String extension = fileName
-                                        .split('.')
-                                        .last
-                                        .toLowerCase();
-
-                                    IconData icon =
-                                        Icons.insert_drive_file_outlined;
-                                    if (extension == 'pdf')
-                                      icon = Icons.picture_as_pdf_outlined;
-                                    if ([
-                                      'jpg',
-                                      'jpeg',
-                                      'png',
-                                    ].contains(extension))
-                                      icon = Icons.image_outlined;
-
-                                    return Container(
-                                      margin: const EdgeInsets.only(
-                                        bottom: 8.0,
-                                      ),
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                        vertical: 10,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: Colors.black.withOpacity(
-                                          0.2,
-                                        ), // Dark inset background
-                                        borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(
-                                          color: Colors.white.withOpacity(0.05),
-                                        ),
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          Icon(
-                                            icon,
-                                            color: Colors.white,
-                                            size: 18,
-                                          ),
-                                          const SizedBox(width: 12),
-                                          Expanded(
-                                            child: Text(
-                                              fileName,
-                                              style: const TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 14,
-                                              ),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 8),
-                                          // Cross button to remove the attachment
-                                          GestureDetector(
-                                            onTap: () {
-                                              setState(() {
-                                                _attachmentPaths.remove(
-                                                  filePath,
-                                                );
-                                              });
-                                            },
-                                            child: Container(
-                                              color: Colors
-                                                  .transparent, // Increases touch target size
-                                              padding: const EdgeInsets.all(
-                                                4.0,
-                                              ),
-                                              child: Icon(
-                                                Icons.close,
-                                                color: Colors.white.withOpacity(
-                                                  0.5,
-                                                ),
-                                                size: 20,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  }).toList(),
-                              ],
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          TextField(
+                            controller: description,
+                            maxLines: 4,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                            ),
+                            decoration: InputDecoration(
+                              hintText: 'Add questions or notes',
+                              hintStyle: TextStyle(
+                                color: Colors.white.withOpacity(0.3),
+                                fontSize: 16,
+                              ),
+                              border: InputBorder.none,
                             ),
                           ),
                         ],
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                  Divider(color: Colors.white.withOpacity(0.1), height: 1),
-                  const SizedBox(height: 24),
+                    const SizedBox(height: 24),
 
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Reminders Schedule',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
+                    GestureDetector(
+                      onTap:
+                          _pickFiles, // Now the ENTIRE container opens the file picker
+                      behavior: HitTestBehavior
+                          .opaque, // Ensures tapping on empty space works
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.circular(25),
                         ),
-                      ),
-                      GestureDetector(
-                        onTap: _showReminderPicker,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.surface,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: const Text(
-                            'Add',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 16,
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-
-                  _selectedReminders.isEmpty
-                      ? Center(
-                          child: Text(
-                            'Empty',
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.2),
-                              fontSize: 16,
-                            ),
-                          ),
-                        )
-                      : Column(
-                          children: _selectedReminders.map((reminder) {
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 12.0),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 20,
-                                  vertical: 16,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: AppColors.surface,
-                                  borderRadius: BorderRadius.circular(24),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.notifications_active,
-                                      color: Colors.white.withOpacity(0.8),
-                                      size: 20,
-                                    ),
-                                    const SizedBox(width: 16),
-                                    Expanded(
-                                      child: Text(
-                                        reminder,
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ),
-                                    GestureDetector(
-                                      onTap: () {
-                                        setState(() {
-                                          _selectedReminders.remove(reminder);
-                                        });
-                                      },
-                                      child: Icon(
-                                        Icons.close,
-                                        color: Colors.white.withOpacity(0.5),
-                                        size: 20,
-                                      ),
-                                    ),
-                                  ],
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.black,
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.white.withOpacity(0.1),
                                 ),
                               ),
-                            );
-                          }).toList(),
+                              child: const Icon(
+                                Icons.attach_file,
+                                color: Colors.white,
+                                size: 20,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Attachments',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+
+                                  // Dynamic Attachments List with Cross Buttons
+                                  if (_attachmentPaths.isEmpty)
+                                    Text(
+                                      'Tap anywhere to add files', // Updated UX text
+                                      style: TextStyle(
+                                        color: Colors.white.withOpacity(0.5),
+                                      ),
+                                    )
+                                  else
+                                    ..._attachmentPaths.map((filePath) {
+                                      String fileName = filePath
+                                          .split('/')
+                                          .last;
+                                      String extension = fileName
+                                          .split('.')
+                                          .last
+                                          .toLowerCase();
+
+                                      IconData icon =
+                                          Icons.insert_drive_file_outlined;
+                                      if (extension == 'pdf')
+                                        icon = Icons.picture_as_pdf_outlined;
+                                      if ([
+                                        'jpg',
+                                        'jpeg',
+                                        'png',
+                                      ].contains(extension))
+                                        icon = Icons.image_outlined;
+
+                                      return Container(
+                                        margin: const EdgeInsets.only(
+                                          bottom: 8.0,
+                                        ),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 10,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Colors.black.withOpacity(
+                                            0.2,
+                                          ), // Dark inset background
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                          border: Border.all(
+                                            color: Colors.white.withOpacity(
+                                              0.05,
+                                            ),
+                                          ),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              icon,
+                                              color: Colors.white,
+                                              size: 18,
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Expanded(
+                                              child: Text(
+                                                fileName,
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 14,
+                                                ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            // Cross button to remove the attachment
+                                            GestureDetector(
+                                              onTap: () {
+                                                setState(() {
+                                                  _attachmentPaths.remove(
+                                                    filePath,
+                                                  );
+                                                });
+                                              },
+                                              child: Container(
+                                                color: Colors
+                                                    .transparent, // Increases touch target size
+                                                padding: const EdgeInsets.all(
+                                                  4.0,
+                                                ),
+                                                child: Icon(
+                                                  Icons.close,
+                                                  color: Colors.white
+                                                      .withOpacity(0.5),
+                                                  size: 20,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    }).toList(),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
-                  const SizedBox(height: 100),
-                ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Divider(color: Colors.white.withOpacity(0.1), height: 1),
+                    const SizedBox(height: 24),
+
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Reminders Schedule',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: _showReminderPicker,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.surface,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: const Text(
+                              'Add',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+
+                    _selectedReminders.isEmpty
+                        ? Center(
+                            child: Text(
+                              'Empty',
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.2),
+                                fontSize: 16,
+                              ),
+                            ),
+                          )
+                        : Column(
+                            children: _selectedReminders.map((reminder) {
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 12.0),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                    vertical: 16,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.surface,
+                                    borderRadius: BorderRadius.circular(24),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.notifications_active,
+                                        color: Colors.white.withOpacity(0.8),
+                                        size: 20,
+                                      ),
+                                      const SizedBox(width: 16),
+                                      Expanded(
+                                        child: Text(
+                                          reminder,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
+                                      GestureDetector(
+                                        onTap: () {
+                                          setState(() {
+                                            _selectedReminders.remove(reminder);
+                                          });
+                                        },
+                                        child: Icon(
+                                          Icons.close,
+                                          color: Colors.white.withOpacity(0.5),
+                                          size: 20,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                    const SizedBox(height: 100),
+                  ],
+                ),
               ),
             ),
-          ),
 
-          Padding(
-            padding: EdgeInsets.only(
-              left: 20,
-              right: 20,
-              bottom: MediaQuery.of(context).padding.bottom + 20,
-              top: 10,
-            ),
-            child: SizedBox(
-              width: double.infinity,
-              height: 60,
-              child: ElevatedButton(
-                onPressed: () {
-                  if (title.text.trim().isEmpty) {
-                    Fluttertoast.showToast(
-                      msg: 'Please enter a task title',
-                      toastLength: Toast.LENGTH_SHORT,
-                      gravity: ToastGravity.BOTTOM,
-                      backgroundColor: Colors.redAccent,
-                      textColor: Colors.white,
+            Padding(
+              padding: EdgeInsets.only(
+                left: 20,
+                right: 20,
+                bottom: MediaQuery.of(context).padding.bottom + 20,
+                top: 10,
+              ),
+              child: SizedBox(
+                width: double.infinity,
+                height: 60,
+                child: ElevatedButton(
+                  onPressed: () {
+                    if (title.text.trim().isEmpty) {
+                      Fluttertoast.showToast(
+                        msg: 'Please enter a task title',
+                        toastLength: Toast.LENGTH_SHORT,
+                        gravity: ToastGravity.BOTTOM,
+                        backgroundColor: Colors.redAccent,
+                        textColor: Colors.white,
+                      );
+                      return;
+                    }
+
+                    if (_selectedDateTime.isBefore(DateTime.now())) {
+                      Fluttertoast.showToast(
+                        msg: 'Cannot save a task in the past.',
+                        toastLength: Toast.LENGTH_SHORT,
+                        gravity: ToastGravity.BOTTOM,
+                        backgroundColor: Colors.redAccent,
+                        textColor: Colors.white,
+                      );
+                      return;
+                    }
+
+                    Task userCreatedTask;
+
+                    // If editing, use copyWith to preserve the ID and other original states
+                    if (widget.taskToEdit != null) {
+                      userCreatedTask = widget.taskToEdit!.copyWith(
+                        title: title.text.trim(),
+                        type: _selectedType.toUpperCase(),
+                        dueDate: _selectedDateTime,
+                        description: description.text.trim(),
+                        reminders: _selectedReminders,
+                        attachmentPaths: _attachmentPaths,
+                      );
+                    } else {
+                      // Create brand new task
+                      userCreatedTask = Task(
+                        id: DateTime.now().millisecondsSinceEpoch.toString(),
+                        title: title.text.trim(),
+                        type: _selectedType.toUpperCase(),
+                        dueDate: _selectedDateTime,
+                        description: description.text.trim(),
+                        reminders: _selectedReminders,
+                        attachmentPaths: _attachmentPaths,
+                      );
+                    }
+
+                    NotificationHelper.scheduleTaskNotifications(
+                      userCreatedTask,
                     );
-                    return;
-                  }
 
-                  if (_selectedDateTime.isBefore(DateTime.now())) {
-                    Fluttertoast.showToast(
-                      msg: 'Cannot save a task in the past.',
-                      toastLength: Toast.LENGTH_SHORT,
-                      gravity: ToastGravity.BOTTOM,
-                      backgroundColor: Colors.redAccent,
-                      textColor: Colors.white,
-                    );
-                    return;
-                  }
-
-                  Task userCreatedTask;
-
-                  // If editing, use copyWith to preserve the ID and other original states
-                  if (widget.taskToEdit != null) {
-                    userCreatedTask = widget.taskToEdit!.copyWith(
-                      title: title.text.trim(),
-                      type: _selectedType.toUpperCase(),
-                      dueDate: _selectedDateTime,
-                      description: description.text.trim(),
-                      reminders: _selectedReminders,
-                      attachmentPaths: _attachmentPaths,
-                    );
-                  } else {
-                    // Create brand new task
-                    userCreatedTask = Task(
-                      id: DateTime.now().millisecondsSinceEpoch.toString(),
-                      title: title.text.trim(),
-                      type: _selectedType.toUpperCase(),
-                      dueDate: _selectedDateTime,
-                      description: description.text.trim(),
-                      reminders: _selectedReminders,
-                      attachmentPaths: _attachmentPaths,
-                    );
-                  }
-
-                  NotificationHelper.scheduleTaskNotifications(userCreatedTask);
-
-                  Navigator.pop(context, userCreatedTask);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: Colors.black,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
+                    Navigator.pop(context, userCreatedTask);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.black,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    elevation: 0,
                   ),
-                  elevation: 0,
-                ),
-                child: Text(
-                  // Dynamically changes button text!
-                  widget.taskToEdit != null ? 'Update Task' : 'Save Task',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                  child: Text(
+                    // Dynamically changes button text!
+                    widget.taskToEdit != null ? 'Update Task' : 'Save Task',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

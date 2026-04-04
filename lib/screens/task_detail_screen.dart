@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:assignment_tracker/theme/constants.dart';
+import 'package:assignment_tracker/utils/string_extensions.dart';
+import 'package:cupertino_modal_sheet/cupertino_modal_sheet.dart';
 import 'package:open_filex/open_filex.dart';
 import '../models/task_model.dart';
 import 'package:intl/intl.dart';
@@ -42,7 +44,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
 
     if (difference.isNegative) {
       val1 = '0';
-      unit1 = 'LATE';
+      unit1 = 'Late';
       currentStatus = 'Overdue';
       statusIconColor = Colors.redAccent;
     } else if (difference.inDays > 0) {
@@ -89,11 +91,8 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
           TextButton(
             onPressed: () async {
               // 1. Open the NewTaskSheet and pass the current task
-              final Task? updatedTask = await showModalBottomSheet<Task>(
+              final Task? updatedTask = await showCupertinoModalSheet<Task>(
                 context: context,
-                isScrollControlled: true,
-                backgroundColor: Colors.transparent,
-                useSafeArea: true,
                 builder: (context) => NewTaskSheet(taskToEdit: currentTask),
               );
 
@@ -111,7 +110,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
               }
             },
             child: const Text(
-              'EDIT',
+              'Edit',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 14,
@@ -141,7 +140,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    currentTask.type.toUpperCase(),
+                    currentTask.type.toSentenceCase(),
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 10,
@@ -153,7 +152,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                 const SizedBox(width: 12),
                 if (currentTask.isHighPriority)
                   const Text(
-                    'URGENT',
+                    'Urgent',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 10,
@@ -265,8 +264,8 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                         children: [
                           Text(
                             currentTask.isCompleted
-                                ? 'COMPLETED'
-                                : 'MARK AS COMPLETE',
+                                ? 'Completed'
+                                : 'Mark as complete',
                             style: TextStyle(
                               color: currentTask.isCompleted
                                   ? Colors.white
@@ -307,7 +306,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'TIME LEFT',
+                          'Time left',
                           style: TextStyle(
                             color: Colors.white.withOpacity(0.6),
                             fontSize: 10,
@@ -377,7 +376,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'MARKS',
+                          'Marks',
                           style: TextStyle(
                             color: Colors.white.withOpacity(0.6),
                             fontSize: 10,

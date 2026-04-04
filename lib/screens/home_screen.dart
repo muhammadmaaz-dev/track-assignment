@@ -1,106 +1,58 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:cupertino_modal_sheet/cupertino_modal_sheet.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/task_model.dart';
+import '../providers/home_tasks_provider.dart';
 import '../widgets/task_widgets.dart';
 import '../services/db_helper.dart';
 import 'new_task_sheet.dart';
 import 'task_detail_screen.dart';
 import 'dart:async';
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
 
   @override
-  _HomeScreenState createState() => _HomeScreenState();
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
-  // Dummy data representing real-time data
-  List<Task> allTasks = [];
-
-  List<Task> todaysFocusTasks = [];
-  List<Task> upcomingTasks = [];
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  late final DatabaseHelper _databaseHelper;
   Timer? _refreshTimer;
-  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadTasks();
-    DatabaseHelper.instance.onDatabaseChanged.addListener(_onDbChanged);
+
+    _databaseHelper = ref.read(homeDatabaseHelperProvider);
+    ref.read(homeTasksControllerProvider.notifier).loadTasks();
+    _databaseHelper.onDatabaseChanged.addListener(_onDbChanged);
 
     _refreshTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
       if (mounted) {
-        _organizetask();
+        ref
+            .read(homeTasksControllerProvider.notifier)
+            .refreshTaskBucketsForCurrentTime();
       }
     });
   }
 
   void _onDbChanged() {
     if (mounted) {
-      _loadTasks();
+      ref.read(homeTasksControllerProvider.notifier).loadTasks();
     }
   }
 
   @override
   void dispose() {
-    DatabaseHelper.instance.onDatabaseChanged.removeListener(_onDbChanged);
+    _databaseHelper.onDatabaseChanged.removeListener(_onDbChanged);
     _refreshTimer?.cancel();
     super.dispose();
   }
 
-  Future<void> _loadTasks() async {
-    final tasks = await DatabaseHelper.instance.getAllTasks();
-    if (mounted) {
-      allTasks = tasks;
-      _organizetask(); // organize updates state and sets lists
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
-
-  void _organizetask() {
-    final now = DateTime.now();
-
-    todaysFocusTasks.clear();
-    upcomingTasks.clear();
-
-    for (var task in allTasks) {
-      if (task.isCompleted) continue; // Skip completed tasks
-
-      bool isToday =
-          task.dueDate.year == now.year &&
-          task.dueDate.month == now.month &&
-          task.dueDate.day == now.day;
-
-      // A strict overdue check - if the due date is before exactly NOW, it's overdue completely
-      if (task.dueDate.isBefore(now)) {
-        continue; // Skip it entirely from home screen, it will go to history
-      } else if (isToday) {
-        // meaning it's today but in the future
-        todaysFocusTasks.add(task);
-      } else if (task.dueDate.isAfter(now)) {
-        upcomingTasks.add(task);
-      }
-    }
-
-    todaysFocusTasks.sort((a, b) => a.dueDate.compareTo(b.dueDate));
-    upcomingTasks.sort((a, b) => a.dueDate.compareTo(b.dueDate));
-
-    setState(() {});
-  }
-
-  void _deleteTask(Task task) async {
-    await DatabaseHelper.instance.deleteTask(task.id);
-    if (mounted) {
-      setState(() {
-        // Remove the task from the main list using its unique ID
-        allTasks.removeWhere((t) => t.id == task.id);
-      });
-      // Reorganize the Today and Upcoming lists
-      _organizetask();
-    }
+  Future<void> _deleteTask(Task task) async {
+    await ref.read(homeTasksControllerProvider.notifier).deleteTask(task);
   }
 
   void _showTaskActionSheet(BuildContext context, Task task) {
@@ -116,30 +68,16 @@ class _HomeScreenState extends State<HomeScreen> {
               Navigator.pop(context); // Close the Cupertino action sheet first
 
               // 2. Open the NewTaskSheet and pass the selected task to edit
-              final Task? updatedTask = await showModalBottomSheet<Task>(
+              final Task? updatedTask = await showCupertinoModalSheet<Task>(
                 context: context,
-                isScrollControlled: true,
-                backgroundColor: Colors.transparent,
-                useSafeArea: true,
                 builder: (context) => NewTaskSheet(taskToEdit: task),
               );
 
               // 3. If the user saved changes, update the DB and UI
               if (updatedTask != null) {
-                await DatabaseHelper.instance.updateTask(updatedTask);
-
-                if (mounted) {
-                  setState(() {
-                    // Find the old task in the master list and replace it
-                    final index = allTasks.indexWhere(
-                      (t) => t.id == updatedTask.id,
-                    );
-                    if (index != -1) {
-                      allTasks[index] = updatedTask;
-                    }
-                    _organizetask(); // Re-sort and filter lists
-                  });
-                }
+                await ref
+                    .read(homeTasksControllerProvider.notifier)
+                    .updateTask(updatedTask);
               }
             },
             child: const Text('Edit'),
@@ -166,6 +104,16 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isLoading = ref.watch(
+      homeTasksControllerProvider.select((state) => state.isLoading),
+    );
+    final todaysFocusTasks = ref.watch(
+      homeTasksControllerProvider.select((state) => state.todaysFocusTasks),
+    );
+    final upcomingTasks = ref.watch(
+      homeTasksControllerProvider.select((state) => state.upcomingTasks),
+    );
+
     return Scaffold(
       backgroundColor: Colors.black,
       floatingActionButton: Padding(
@@ -174,23 +122,16 @@ class _HomeScreenState extends State<HomeScreen> {
           // 1. Is function ko 'async' banayein
           onPressed: () async {
             // 2. Naya task aane ka wait karein
-            final Task? newTask = await showModalBottomSheet<Task>(
+            final Task? newTask = await showCupertinoModalSheet<Task>(
               context: context,
-              isScrollControlled: true,
-              backgroundColor: Colors.transparent,
-              useSafeArea: true,
               builder: (context) => const NewTaskSheet(),
             );
 
             // 3. Agar user ne task add kiya hai (cancel nahi kiya) to list me daal dein
             if (newTask != null) {
-              await DatabaseHelper.instance.insertTask(newTask);
-              if (mounted) {
-                setState(() {
-                  allTasks.add(newTask); // Main list me add karein
-                  _organizetask(); // Dobara sort aur filter karein
-                });
-              }
+              await ref
+                  .read(homeTasksControllerProvider.notifier)
+                  .addTask(newTask);
             }
           },
           backgroundColor: Colors.white,
@@ -199,7 +140,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       body: SafeArea(
-        child: _isLoading
+        child: isLoading
             ? const SizedBox.shrink()
             : (todaysFocusTasks.isEmpty &&
                   upcomingTasks.isEmpty) // <--- Updated line
@@ -263,10 +204,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: todaysFocusTasks.length,
                       itemBuilder: (context, index) {
-                        bool isTopTask = index == 0;
-                        Task originalTask = todaysFocusTasks[index];
+                        final bool isTopTask = index == 0;
+                        final Task originalTask = todaysFocusTasks[index];
 
-                        Task displayTask = Task(
+                        final Task displayTask = Task(
                           id: originalTask.id,
                           title: originalTask.title,
                           type: originalTask.type,
@@ -287,26 +228,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             );
 
                             if (result == true) {
-                              // Task was marked as completed
-                              final index = allTasks.indexWhere(
-                                (t) => t.id == originalTask.id,
-                              );
-                              if (index != -1) {
-                                final updatedTask = allTasks[index].copyWith(
-                                  isCompleted: true,
-                                );
-                                await DatabaseHelper.instance.updateTask(
-                                  updatedTask,
-                                );
-                                if (mounted) {
-                                  setState(() {
-                                    allTasks[index] = updatedTask;
-                                  });
-                                }
-                              }
-                              if (mounted) {
-                                _organizetask();
-                              }
+                              await ref
+                                  .read(homeTasksControllerProvider.notifier)
+                                  .markTaskCompleted(originalTask.id);
                             }
                           },
                           onLongPress: () {
@@ -336,45 +260,29 @@ class _HomeScreenState extends State<HomeScreen> {
                       separatorBuilder: (context, index) =>
                           Divider(color: Colors.grey.shade800, height: 1),
                       itemBuilder: (context, index) {
+                        final Task originalTask = upcomingTasks[index];
+
                         return GestureDetector(
                           behavior: HitTestBehavior.opaque,
                           onTap: () async {
                             final result = await Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => TaskDetailScreen(
-                                  task: upcomingTasks[index],
-                                ),
+                                builder: (context) =>
+                                    TaskDetailScreen(task: originalTask),
                               ),
                             );
 
                             if (result == true) {
-                              final originalId = upcomingTasks[index].id;
-                              final allIndex = allTasks.indexWhere(
-                                (t) => t.id == originalId,
-                              );
-                              if (allIndex != -1) {
-                                final updatedTask = allTasks[allIndex].copyWith(
-                                  isCompleted: true,
-                                );
-                                await DatabaseHelper.instance.updateTask(
-                                  updatedTask,
-                                );
-                                if (mounted) {
-                                  setState(() {
-                                    allTasks[allIndex] = updatedTask;
-                                  });
-                                }
-                              }
-                              if (mounted) {
-                                _organizetask();
-                              }
+                              await ref
+                                  .read(homeTasksControllerProvider.notifier)
+                                  .markTaskCompleted(originalTask.id);
                             }
                           },
                           onLongPress: () {
-                            _showTaskActionSheet(context, upcomingTasks[index]);
+                            _showTaskActionSheet(context, originalTask);
                           },
-                          child: UpcomingTaskTile(task: upcomingTasks[index]),
+                          child: UpcomingTaskTile(task: originalTask),
                         );
                       },
                     ),

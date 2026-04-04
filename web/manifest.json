@@ -1,6 +1,6 @@
 {
-    "name": "assignment_tracker",
-    "short_name": "assignment_tracker",
+    "name": "Ordo",
+    "short_name": "Ordo",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

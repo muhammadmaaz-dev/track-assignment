@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:assignment_tracker/services/notification_helper.dart';
 import 'package:assignment_tracker/theme/constants.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // Naya import
 
 class SettingScreen extends StatefulWidget {
   const SettingScreen({Key? key}) : super(key: key);
@@ -13,6 +15,51 @@ class _SettingScreenState extends State<SettingScreen> {
   bool _notificationsEnabled = true;
   bool _ringed = true;
   bool _darkModeEnabled = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadNotificationSetting();
+    _loadRingSetting(); // Screen open hone par ring setting load karega
+  }
+
+  Future<void> _loadNotificationSetting() async {
+    final enabled = await NotificationHelper.areNotificationsEnabled();
+    final ringEnabled =
+        await NotificationHelper.isRingEnabled(); // Yeh naya add karein
+    if (!mounted) return;
+
+    setState(() {
+      _notificationsEnabled = enabled;
+      _ringed = ringEnabled; // Yeh update karein
+    });
+  }
+
+  // Ring setting ko SharedPreferences se load karne ka function
+  Future<void> _loadRingSetting() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+
+    setState(() {
+      _ringed = prefs.getBool('ring_enabled') ?? true; // Default true rakha hai
+    });
+  }
+
+  Future<void> _toggleNotifications(bool value) async {
+    setState(() {
+      _notificationsEnabled = value;
+    });
+
+    await NotificationHelper.setNotificationsEnabled(value);
+  }
+
+  // Ring setting ko SharedPreferences mein save karne ka function
+  Future<void> _toggleRingSetting(bool value) async {
+    setState(() {
+      _ringed = value;
+    });
+    await NotificationHelper.setRingEnabled(value); // Yeh call karein
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -59,11 +106,7 @@ class _SettingScreenState extends State<SettingScreen> {
                       title: 'Notifications',
                       trailing: CupertinoSwitch(
                         value: _notificationsEnabled,
-                        onChanged: (value) {
-                          setState(() {
-                            _notificationsEnabled = value;
-                          });
-                        },
+                        onChanged: _toggleNotifications,
                         activeColor: const Color.fromARGB(
                           194,
                           43,
@@ -83,11 +126,8 @@ class _SettingScreenState extends State<SettingScreen> {
                       title: 'Ring',
                       trailing: CupertinoSwitch(
                         value: _ringed,
-                        onChanged: (value) {
-                          setState(() {
-                            _ringed = value;
-                          });
-                        },
+                        onChanged:
+                            _toggleRingSetting, // Yahan naya function attach kiya
                         activeColor: const Color.fromARGB(
                           194,
                           43,

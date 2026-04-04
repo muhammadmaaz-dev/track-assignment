@@ -1,3 +1,4 @@
+import 'package:assignment_tracker/utils/string_extensions.dart';
 import 'package:flutter/material.dart';
 import '../models/task_model.dart';
 import 'package:intl/intl.dart';
@@ -40,7 +41,7 @@ class TodaysFocusCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  task.type.toUpperCase(),
+                  task.type.toSentenceCase(),
                   style: TextStyle(
                     color: textColor,
                     fontSize: 11,
@@ -86,7 +87,7 @@ class TodaysFocusCard extends StatelessWidget {
               Icon(Icons.access_time, size: 14, color: subtitleColor),
               const SizedBox(width: 8),
               Text(
-                'DUE TODAY',
+                'Due today',
                 style: TextStyle(
                   color: subtitleColor,
                   fontSize: 11,
@@ -127,7 +128,7 @@ class UpcomingTaskTile extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${_formatDate(task.dueDate).toUpperCase()} • ${task.type.toUpperCase()}',
+                  '${_formatDate(task.dueDate).toSentenceCase()} • ${task.type.toSentenceCase()}',
                   style: const TextStyle(
                     color: Colors.grey,
                     fontSize: 12,
@@ -150,7 +151,7 @@ class UpcomingTaskTile extends StatelessWidget {
     final upcomingDate = DateTime(date.year, date.month, date.day);
 
     if (upcomingDate == today.add(const Duration(days: 1))) {
-      return 'DUE TOMORROW';
+      return 'Due tomorrow';
     } else {
       return 'DUE ${DateFormat('EEEE').format(date)}'; // Extends to DUE FRIDAY, etc.
     }

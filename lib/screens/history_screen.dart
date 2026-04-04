@@ -1,3 +1,4 @@
+import 'package:assignment_tracker/utils/string_extensions.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/task_model.dart';
@@ -101,7 +102,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         elevation: 0,
         centerTitle: true,
         title: const Text(
-          'HISTORY',
+          'History',
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
@@ -121,11 +122,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Row(
                 children: [
-                  _buildTab('ALL', 0),
+                  _buildTab('All', 0),
                   const SizedBox(width: 12),
-                  _buildTab('COMPLETED', 1),
+                  _buildTab('Completed', 1),
                   const SizedBox(width: 12),
-                  _buildTab('OVERDUE', 2),
+                  _buildTab('Overdue', 2),
                 ],
               ),
             ),
@@ -160,7 +161,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 20),
               child: Text(
-                'RECENT ARCHIVE',
+                'Recent Archive',
                 style: TextStyle(
                   color: Colors.grey,
                   fontSize: 12,
@@ -237,7 +238,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                     ? [
                                         _buildFooterItem(
                                           Icons.info_outline,
-                                          task.type.toUpperCase(),
+                                          task.type.toSentenceCase(),
                                         ),
                                       ]
                                     : footers,
@@ -390,8 +391,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     ],
                     Text(
                       isCompleted
-                          ? 'DONE'
-                          : (isOverdue ? 'OVERDUE' : 'PENDING'),
+                          ? 'Done'
+                          : (isOverdue ? 'Overdue' : 'Pending'),
                       style: TextStyle(
                         color: isCompleted
                             ? Colors.white
