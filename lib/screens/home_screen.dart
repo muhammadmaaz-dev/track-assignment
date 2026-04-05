@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:cupertino_modal_sheet/cupertino_modal_sheet.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -59,7 +60,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     showCupertinoModalPopup(
       context: context,
       builder: (BuildContext context) => CupertinoActionSheet(
-        title: const Text('Task Options'),
+        title: Text('Task Options'),
         message: Text(task.title),
         actions: <CupertinoActionSheetAction>[
           CupertinoActionSheetAction(
@@ -80,7 +81,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     .updateTask(updatedTask);
               }
             },
-            child: const Text('Edit'),
+            child: Text('Edit'),
           ),
           CupertinoActionSheetAction(
             isDestructiveAction: true,
@@ -88,7 +89,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               Navigator.pop(context);
               _deleteTask(task);
             },
-            child: const Text('Delete'),
+            child: Text('Delete'),
           ),
         ],
         cancelButton: CupertinoActionSheetAction(
@@ -96,7 +97,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           onPressed: () {
             Navigator.pop(context);
           },
-          child: const Text('Cancel'),
+          child: Text('Cancel'),
         ),
       ),
     );
@@ -117,7 +118,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 80),
+        padding: EdgeInsets.only(bottom: 58.h),
         child: FloatingActionButton(
           // 1. Is function ko 'async' banayein
           onPressed: () async {
@@ -136,12 +137,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           },
           backgroundColor: Colors.white,
           shape: const CircleBorder(),
-          child: const Icon(Icons.add, color: Colors.black),
+          child: Icon(Icons.add, color: Colors.black),
         ),
       ),
       body: SafeArea(
         child: isLoading
-            ? const SizedBox.shrink()
+            ? SizedBox.shrink()
             : (todaysFocusTasks.isEmpty &&
                   upcomingTasks.isEmpty) // <--- Updated line
             ? Center(
@@ -150,15 +151,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   children: [
                     Icon(
                       Icons.assignment_turned_in_outlined,
-                      size: 64,
+                      size: 64.sp,
                       color: Colors.white.withOpacity(0.2),
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16.h),
                     Text(
                       'No task...',
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.5),
-                        fontSize: 18,
+                        fontSize: 18.sp,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -166,9 +167,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
               )
             : SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24.0,
-                  vertical: 16.0,
+                padding: EdgeInsets.symmetric(
+                  horizontal: 20.4.w,
+                  vertical: 13.6.h,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -177,11 +178,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
+                        Text(
                           'Today\'s Focus',
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: 32,
+                            fontSize: 32.sp,
                             fontWeight: FontWeight.bold,
                             letterSpacing: -0.5,
                           ),
@@ -190,14 +191,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           '${todaysFocusTasks.length} TASKS',
                           style: TextStyle(
                             color: Colors.grey.shade400,
-                            fontSize: 14,
+                            fontSize: 14.sp,
                             fontWeight: FontWeight.w600,
                             letterSpacing: 1.0,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 24),
+                    SizedBox(height: 24.h),
                     // Today's Focus List
                     ListView.builder(
                       shrinkWrap: true,
@@ -240,18 +241,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         );
                       },
                     ),
-                    const SizedBox(height: 32),
+                    SizedBox(height: 32.h),
                     // Upcoming Header
-                    const Text(
+                    Text(
                       'Upcoming',
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 24,
+                        fontSize: 24.sp,
                         fontWeight: FontWeight.bold,
                         letterSpacing: -0.5,
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16.h),
                     // Upcoming List
                     ListView.separated(
                       shrinkWrap: true,
@@ -286,7 +287,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         );
                       },
                     ),
-                    const SizedBox(height: 80), // Fab space
+                    SizedBox(height: 80.h), // Fab space
                   ],
                 ),
               ),

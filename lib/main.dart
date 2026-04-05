@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:awesome_notifications/awesome_notifications.dart'; // NAYA IMPORT
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 void main() async {
   // NAYA CODE: Async setup ke liye ensureInitialized zaroori hai
@@ -63,28 +64,33 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Ordo',
-      debugShowCheckedModeBanner: false,
+    return ScreenUtilInit(
+      designSize: const Size(390, 844),
+      minTextAdapt: true,
+      splitScreenMode: true,
+      builder: (context, child) => MaterialApp(
+        title: 'Ordo',
+        debugShowCheckedModeBanner: false,
 
-      // Cupertino Widgets (iOS date picker) ko support karne ke liye
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: const [
-        Locale('en', 'US'), // English support
-      ],
+        // Cupertino Widgets (iOS date picker) ko support karne ke liye
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [
+          Locale('en', 'US'), // English support
+        ],
 
-      theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: Colors.black,
-        colorScheme: const ColorScheme.dark(
-          primary: Colors.white,
-          secondary: Colors.white,
+        theme: ThemeData.dark().copyWith(
+          scaffoldBackgroundColor: Colors.black,
+          colorScheme: const ColorScheme.dark(
+            primary: Colors.white,
+            secondary: Colors.white,
+          ),
         ),
+        home: const MainScreen(),
       ),
-      home: const MainScreen(),
     );
   }
 }

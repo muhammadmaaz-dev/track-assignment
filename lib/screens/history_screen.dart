@@ -1,5 +1,6 @@
 import 'package:assignment_tracker/utils/string_extensions.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import '../models/task_model.dart';
 import 'task_detail_screen.dart';
@@ -101,7 +102,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         backgroundColor: Colors.black,
         elevation: 0,
         centerTitle: true,
-        title: const Text(
+        title: Text(
           'History',
           style: TextStyle(
             color: Colors.white,
@@ -115,26 +116,26 @@ class _HistoryScreenState extends State<HistoryScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 16),
+            SizedBox(height: 16.h),
             // Tabs
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding: EdgeInsets.symmetric(horizontal: 17.w),
               child: Row(
                 children: [
                   _buildTab('All', 0),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12.w),
                   _buildTab('Completed', 1),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12.w),
                   _buildTab('Overdue', 2),
                 ],
               ),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24.h),
 
             // Stats Row
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding: EdgeInsets.symmetric(horizontal: 17.w),
               child: Row(
                 children: [
                   Expanded(
@@ -144,7 +145,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       icon: Icons.trending_up,
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  SizedBox(width: 16.w),
                   Expanded(
                     child: _buildStatCard(
                       title: 'Tasks',
@@ -155,29 +156,29 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 32),
+            SizedBox(height: 32.h),
 
             // Recent Archive Section Title
-            const Padding(
+            Padding(
               padding: EdgeInsets.symmetric(horizontal: 20),
               child: Text(
                 'Recent Archive',
                 style: TextStyle(
                   color: Colors.grey,
-                  fontSize: 12,
+                  fontSize: 12.sp,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1.5,
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16.h),
 
             // Archive List
             _isLoading
-                ? const SizedBox.shrink() // Prevents flicker
+                ? SizedBox.shrink() // Prevents flicker
                 : _filteredTasks.isEmpty
-                ? const Padding(
-                    padding: EdgeInsets.all(40.0),
+                ? Padding(
+                    padding: EdgeInsets.all(40.0.w),
                     child: Center(
                       child: Text(
                         'No history available',
@@ -186,7 +187,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     ),
                   )
                 : Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    padding: EdgeInsets.symmetric(horizontal: 17.w),
                     child: Column(
                       children: [
                         ..._filteredTasks.map((task) {
@@ -213,14 +214,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
                           }
 
                           return Padding(
-                            padding: const EdgeInsets.only(bottom: 16.0),
+                            padding: EdgeInsets.only(bottom: 16.0),
                             child: GestureDetector(
                               onTap: () {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) =>
-                                        TaskDetailScreen(task: task),
+                                    builder: (context) => TaskDetailScreen(
+                                      task: task,
+                                      isFromHistory: true,
+                                    ),
                                   ),
                                 ).then((_) {
                                   // Refresh when coming back
@@ -246,7 +249,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                             ),
                           );
                         }).toList(),
-                        const SizedBox(height: 80),
+                        SizedBox(height: 80.h),
                       ],
                     ),
                   ),
@@ -265,17 +268,17 @@ class _HistoryScreenState extends State<HistoryScreen> {
         });
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
         decoration: BoxDecoration(
           color: isSelected ? Colors.white : const Color(0xFF1E1E1E),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(20.r),
         ),
         child: Text(
           title,
           style: TextStyle(
             color: isSelected ? Colors.black : Colors.grey,
             fontWeight: FontWeight.bold,
-            fontSize: 12,
+            fontSize: 12.sp,
             letterSpacing: 1.0,
           ),
         ),
@@ -289,37 +292,37 @@ class _HistoryScreenState extends State<HistoryScreen> {
     required IconData icon,
   }) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(20.w),
       decoration: BoxDecoration(
         color: const Color(0xFF1E1E1E),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(20.r),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               color: Colors.grey,
-              fontSize: 16,
+              fontSize: 16.sp,
               fontWeight: FontWeight.bold,
               letterSpacing: 1.5,
             ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16.h),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
                 value,
-                style: const TextStyle(
+                style: TextStyle(
                   color: Colors.white,
-                  fontSize: 32,
+                  fontSize: 32.sp,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              Icon(icon, color: Colors.white, size: 24),
+              Icon(icon, color: Colors.white, size: 20.4.w),
             ],
           ),
         ],
@@ -335,10 +338,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
     required List<Widget> footers,
   }) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(20.w),
       decoration: BoxDecoration(
         color: const Color(0xFF1E1E1E),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(20.r),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -349,19 +352,19 @@ class _HistoryScreenState extends State<HistoryScreen> {
               Expanded(
                 child: Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Colors.white,
-                    fontSize: 18,
+                    fontSize: 18.sp,
                     fontWeight: FontWeight.bold,
                     height: 1.3,
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12.w),
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
+                padding: EdgeInsets.symmetric(
+                  horizontal: 8.5.w,
+                  vertical: 5.1.h,
                 ),
                 decoration: BoxDecoration(
                   color: isCompleted
@@ -369,7 +372,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       : (isOverdue
                             ? Colors.red.withOpacity(0.2)
                             : Colors.orange.withOpacity(0.2)),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(20.r),
                   border: isCompleted
                       ? null
                       : (isOverdue
@@ -382,12 +385,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (isCompleted) ...[
-                      const Icon(
+                      Icon(
                         Icons.check_circle,
                         color: Colors.white,
-                        size: 14,
+                        size: 14.sp,
                       ),
-                      const SizedBox(width: 4),
+                      SizedBox(width: 4.w),
                     ],
                     Text(
                       isCompleted
@@ -399,7 +402,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                             : (isOverdue
                                   ? Colors.red.shade300
                                   : Colors.orange.shade300),
-                        fontSize: 10,
+                        fontSize: 10.sp,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 1.0,
                       ),
@@ -409,14 +412,17 @@ class _HistoryScreenState extends State<HistoryScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Text(date, style: const TextStyle(color: Colors.grey, fontSize: 14)),
-          const SizedBox(height: 20),
+          SizedBox(height: 12.h),
+          Text(
+            date,
+            style: TextStyle(color: Colors.grey, fontSize: 12.sp),
+          ),
+          SizedBox(height: 20.h),
           Row(
             children: [
               for (int i = 0; i < footers.length; i++) ...[
                 footers[i],
-                if (i < footers.length - 1) const SizedBox(width: 20),
+                if (i < footers.length - 1) SizedBox(width: 20.w),
               ],
             ],
           ),
@@ -429,13 +435,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, color: Colors.grey, size: 16),
-        const SizedBox(width: 6),
+        Icon(icon, color: Colors.grey, size: 13.6.w),
+        SizedBox(width: 6.w),
         Text(
           text,
-          style: const TextStyle(
+          style: TextStyle(
             color: Colors.grey,
-            fontSize: 13,
+            fontSize: 13.sp,
             fontWeight: FontWeight.w500,
           ),
         ),

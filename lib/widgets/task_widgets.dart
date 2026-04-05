@@ -1,5 +1,6 @@
 import 'package:assignment_tracker/utils/string_extensions.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../models/task_model.dart';
 import 'package:intl/intl.dart';
 
@@ -16,11 +17,11 @@ class TodaysFocusCard extends StatelessWidget {
     Color subtitleColor = isBright ? Colors.black87 : Colors.white70;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16.0),
-      padding: const EdgeInsets.all(20.0),
+      margin: EdgeInsets.only(bottom: 13.6.h),
+      padding: EdgeInsets.all(17.w),
       decoration: BoxDecoration(
         color: bgColor,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(20.r),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -29,22 +30,22 @@ class TodaysFocusCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
+                padding: EdgeInsets.symmetric(
+                  horizontal: 8.5.w,
+                  vertical: 3.4.h,
                 ),
                 decoration: BoxDecoration(
                   border: Border.all(
                     color: isBright ? Colors.grey.shade300 : Colors.transparent,
                   ),
                   color: isBright ? Colors.transparent : Colors.transparent,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(20.r),
                 ),
                 child: Text(
                   task.type.toSentenceCase(),
                   style: TextStyle(
                     color: textColor,
-                    fontSize: 11,
+                    fontSize: 11.sp,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 1.2,
                   ),
@@ -55,7 +56,7 @@ class TodaysFocusCard extends StatelessWidget {
                   task.timeString!,
                   style: TextStyle(
                     color: subtitleColor,
-                    fontSize: 11,
+                    fontSize: 11.sp,
                     fontWeight: FontWeight.w600,
                   ),
                 )
@@ -64,33 +65,33 @@ class TodaysFocusCard extends StatelessWidget {
                   'DUE ${DateFormat('h:mm a').format(task.dueDate)}',
                   style: TextStyle(
                     color: subtitleColor,
-                    fontSize: 11,
+                    fontSize: 11.sp,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16.h),
           Text(
             task.title,
             style: TextStyle(
               color: textColor,
-              fontSize: 20,
+              fontSize: 20.sp,
               fontWeight: FontWeight.w800,
               height: 1.2,
             ),
           ),
 
-          const SizedBox(height: 20),
+          SizedBox(height: 20.h),
           Row(
             children: [
-              Icon(Icons.access_time, size: 14, color: subtitleColor),
-              const SizedBox(width: 8),
+              Icon(Icons.access_time, size: 14.sp, color: subtitleColor),
+              SizedBox(width: 8.w),
               Text(
                 'Due today',
                 style: TextStyle(
                   color: subtitleColor,
-                  fontSize: 11,
+                  fontSize: 11.sp,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -110,7 +111,7 @@ class UpcomingTaskTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16.0),
+      padding: EdgeInsets.symmetric(vertical: 13.6.h),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -120,18 +121,18 @@ class UpcomingTaskTile extends StatelessWidget {
               children: [
                 Text(
                   task.title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Colors.white,
-                    fontSize: 16,
+                    fontSize: 16.sp,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: 4.h),
                 Text(
                   '${_formatDate(task.dueDate).toSentenceCase()} • ${task.type.toSentenceCase()}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Colors.grey,
-                    fontSize: 12,
+                    fontSize: 12.sp,
                     fontWeight: FontWeight.w500,
                     letterSpacing: 0.5,
                   ),
@@ -139,7 +140,7 @@ class UpcomingTaskTile extends StatelessWidget {
               ],
             ),
           ),
-          const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
+          Icon(Icons.chevron_right, color: Colors.grey, size: 20),
         ],
       ),
     );

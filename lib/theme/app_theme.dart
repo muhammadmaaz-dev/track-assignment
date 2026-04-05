@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'constants.dart';
 
 class AppTheme {
@@ -37,12 +38,12 @@ class AppTheme {
   static TextTheme _mapTextTheme(TextTheme base) {
     TextStyle applyHeading(TextStyle? style) {
       return style?.copyWith(fontFamily: headingFontFamily) ??
-          const TextStyle(fontFamily: headingFontFamily);
+          TextStyle(fontFamily: headingFontFamily);
     }
 
     TextStyle applyBody(TextStyle? style) {
       return style?.copyWith(fontFamily: bodyFontFamily) ??
-          const TextStyle(fontFamily: bodyFontFamily);
+          TextStyle(fontFamily: bodyFontFamily);
     }
 
     return base.copyWith(

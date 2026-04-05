@@ -1,8 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:assignment_tracker/services/notification_helper.dart';
 import 'package:assignment_tracker/theme/constants.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // Naya import
+import 'package:assignment_tracker/screens/marks_setting_screen.dart'; // Naya import
 
 class SettingScreen extends StatefulWidget {
   const SettingScreen({Key? key}) : super(key: key);
@@ -67,37 +69,37 @@ class _SettingScreenState extends State<SettingScreen> {
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+          padding: EdgeInsets.symmetric(horizontal: 21.w, vertical: 14.h),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 16),
+              SizedBox(height: 14.h),
               // Header
-              const Text(
+              Text(
                 'Settings',
                 style: TextStyle(
                   color: AppColors.primaryText,
-                  fontSize: 36,
+                  fontSize: 30.sp,
                   fontWeight: FontWeight.bold,
                   letterSpacing: -0.5,
                 ),
               ),
-              const SizedBox(height: 8),
-              const Text(
+              SizedBox(height: 7.h),
+              Text(
                 'Personalizing your digital workspace.',
                 style: TextStyle(
                   color: AppColors.mutedText,
-                  fontSize: 14,
+                  fontSize: 12.sp,
                   fontWeight: FontWeight.w400,
                 ),
               ),
-              const SizedBox(height: 40),
+              SizedBox(height: 34.h),
 
               // Preferences Container
               Container(
                 decoration: BoxDecoration(
                   color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(25),
+                  borderRadius: BorderRadius.circular(21.r),
                 ),
                 child: Column(
                   children: [
@@ -149,29 +151,42 @@ class _SettingScreenState extends State<SettingScreen> {
                       title: 'Set Marks',
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
-                        children: [Icon(Icons.arrow_forward_ios)],
+                        children: [
+                          Icon(
+                            Icons.arrow_forward_ios,
+                            color: AppColors.mutedText,
+                          ),
+                        ],
                       ),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const MarksSettingScreen(),
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 32),
+              SizedBox(height: 32.h),
 
               // System Section
-              const Text(
+              Text(
                 'SYSTEM',
                 style: TextStyle(
                   color: AppColors.mutedText,
-                  fontSize: 12,
+                  fontSize: 12.sp,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1.5,
                 ),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12.h),
               Container(
                 decoration: BoxDecoration(
                   color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(20.r),
                 ),
                 child: _buildSettingsRow(
                   icon: Icons.cloud_outlined,
@@ -179,30 +194,30 @@ class _SettingScreenState extends State<SettingScreen> {
                   title: 'Backup',
                   titleColor: AppColors.mutedText,
                   subtitle: 'Coming soon in v2.0',
-                  trailing: const Icon(
+                  trailing: Icon(
                     Icons.lock_outline,
                     color: AppColors.mutedText,
-                    size: 20,
+                    size: 20.sp,
                   ),
                 ),
               ),
-              const SizedBox(height: 32),
+              SizedBox(height: 32.h),
 
               // Information Section
-              const Text(
+              Text(
                 'INFORMATION',
                 style: TextStyle(
                   color: AppColors.mutedText,
-                  fontSize: 12,
+                  fontSize: 12.sp,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1.5,
                 ),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12.h),
               Container(
                 decoration: BoxDecoration(
                   color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(20.r),
                 ),
                 child: _buildSettingsRow(
                   icon: Icons.info_outline,
@@ -210,26 +225,26 @@ class _SettingScreenState extends State<SettingScreen> {
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Text(
+                      Text(
                         'v1.4.2',
                         style: TextStyle(
                           color: AppColors.mutedText,
-                          fontSize: 14,
+                          fontSize: 14.sp,
                         ),
                       ),
-                      const SizedBox(width: 4),
+                      SizedBox(width: 4.w),
                       Icon(
                         Icons.chevron_right,
                         color: AppColors.mutedText.withOpacity(0.5),
-                        size: 20,
+                        size: 20.sp,
                       ),
                     ],
                   ),
                 ),
               ),
-              const SizedBox(height: 48),
+              SizedBox(height: 48.h),
 
-              const SizedBox(height: 100), // Spacing for bottom nav bar
+              SizedBox(height: 100.h), // Spacing for bottom nav bar
             ],
           ),
         ),
@@ -245,43 +260,48 @@ class _SettingScreenState extends State<SettingScreen> {
     Color? iconBgColor,
     Color? iconColor,
     Color? titleColor,
+    VoidCallback? onTap,
   }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 16.0),
-      child: Row(
-        children: [
-          // Icon
-          Icon(icon, color: iconColor ?? AppColors.primaryText, size: 22),
-          const SizedBox(width: 16),
-          // Title & Subtitle
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    color: titleColor ?? AppColors.primaryText,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                if (subtitle != null) ...[
-                  const SizedBox(height: 4),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12.r),
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 12.0.w, vertical: 16.0.h),
+        child: Row(
+          children: [
+            // Icon
+            Icon(icon, color: iconColor ?? AppColors.primaryText, size: 18.7.w),
+            SizedBox(width: 16.w),
+            // Title & Subtitle
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Text(
-                    subtitle,
-                    style: const TextStyle(
-                      color: AppColors.mutedText,
-                      fontSize: 12,
+                    title,
+                    style: TextStyle(
+                      color: titleColor ?? AppColors.primaryText,
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
+                  if (subtitle != null) ...[
+                    SizedBox(height: 4.h),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        color: AppColors.mutedText,
+                        fontSize: 12.sp,
+                      ),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
-          ),
-          // Trailing widget
-          trailing,
-        ],
+            // Trailing widget
+            trailing,
+          ],
+        ),
       ),
     );
   }
