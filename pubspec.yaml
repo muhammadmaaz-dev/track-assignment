@@ -119,4 +119,15 @@ flutter:
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
+  web:
+    generate: true
+  windows:
+    generate: true
+  macos:
+    generate: true
+  linux:
+    generate: true
   image_path: "assets/images/orb_icon.png"
+  image_path_android: "assets/images/orb_icon.png"
+  image_path_ios: "assets/images/orb_icon.png"
+  min_sdk_android: 21

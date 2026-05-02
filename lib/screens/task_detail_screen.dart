@@ -1,17 +1,17 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter/services.dart'; // NEW IMPORT FOR CLIPBOARD
+import 'package:flutter/services.dart';
 import 'package:assignment_tracker/theme/constants.dart';
 import 'package:assignment_tracker/utils/string_extensions.dart';
 import 'package:cupertino_modal_sheet/cupertino_modal_sheet.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // NEW IMPORT
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/task_model.dart';
 import 'package:intl/intl.dart';
-import '../services/db_helper.dart'; // NEW IMPORT
-import 'new_task_sheet.dart'; // NEW IMPORT
+import '../services/db_helper.dart';
+import 'new_task_sheet.dart';
 
 class TaskDetailScreen extends StatefulWidget {
   final Task task;
@@ -34,7 +34,6 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
   @override
   void initState() {
     super.initState();
-    // Start by showing the task passed from the Home Screen
     currentTask = widget.task;
     _loadMarks();
   }
@@ -204,18 +203,14 @@ $aiPrompt''';
           if (!widget.isFromHistory)
             TextButton(
               onPressed: () async {
-                // 1. Open the NewTaskSheet and pass the current task
                 final Task? updatedTask = await showCupertinoModalSheet<Task>(
                   context: context,
                   builder: (context) => NewTaskSheet(taskToEdit: currentTask),
                 );
 
-                // 2. If the user saved changes (didn't cancel)
                 if (updatedTask != null) {
-                  // Save the updated data directly to the database
                   await DatabaseHelper.instance.updateTask(updatedTask);
 
-                  // Refresh this detail screen instantly
                   if (mounted) {
                     setState(() {
                       currentTask = updatedTask;
@@ -640,7 +635,7 @@ $aiPrompt''';
                 width: double.infinity,
                 padding: EdgeInsets.symmetric(vertical: 13.6.h),
                 decoration: BoxDecoration(
-                  color: const Color.fromARGB(194, 255, 255, 255),
+                  color: const Color(0xFFE5E5E5),
                   borderRadius: BorderRadius.circular(30.r),
                 ),
                 alignment: Alignment.center,

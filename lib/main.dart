@@ -1,48 +1,44 @@
 import 'package:assignment_tracker/screens/main_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:awesome_notifications/awesome_notifications.dart'; // NAYA IMPORT
+import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 void main() async {
-  // NAYA CODE: Async setup ke liye ensureInitialized zaroori hai
   WidgetsFlutterBinding.ensureInitialized();
 
-  // NAYA CODE: Notification Initialize karein
-  AwesomeNotifications().initialize(
-    // aapka icon yahan hoga (e.g., 'resource://drawable/res_app_icon')
-    null,
-    [
-      // 1. Channel for Sound (Bypasses Silent Mode if permission granted)
-      NotificationChannel(
-        channelKey: 'task_channel_sound',
-        channelName: 'Task Alerts with Sound',
-        channelDescription: 'Plays sound even on silent',
-        playSound: true,
-        criticalAlerts:
-            true, // Yeh silent mode bypass karne ke liye zaroori hai
-        importance: NotificationImportance.Max,
-        defaultColor: Colors.deepPurple,
-        ledColor: Colors.white,
-      ),
-      // 2. Channel for Silent
-      NotificationChannel(
-        channelKey: 'task_channel_silent',
-        channelName: 'Task Alerts Silent',
-        channelDescription: 'Notifications without sound',
-        playSound: false, // Yahan sound off hai
-        importance: NotificationImportance.High,
-        defaultColor: Colors.deepPurple,
-        ledColor: Colors.white,
-      ),
-    ],
-  );
+  AwesomeNotifications().initialize('resource://drawable/notification_icon', [
+    NotificationChannel(
+      channelKey: 'task_channel_sound',
+      channelName: 'Task Alerts with Sound',
+      channelDescription: 'Plays sound even on silent',
+      playSound: true,
+      criticalAlerts: true,
+      importance: NotificationImportance.Max,
+      defaultColor: Colors.deepPurple,
+      ledColor: Colors.white,
+      enableVibration: true,
+      enableLights: true,
+      icon: 'resource://drawable/notification_icon',
+    ),
+    NotificationChannel(
+      channelKey: 'task_channel_silent',
+      channelName: 'Task Alerts Silent',
+      channelDescription: 'Notifications without sound',
+      playSound: false,
+      importance: NotificationImportance.High,
+      defaultColor: Colors.deepPurple,
+      ledColor: Colors.white,
+      enableVibration: true,
+      enableLights: true,
+      icon: 'resource://drawable/notification_icon',
+    ),
+  ]);
 
   runApp(const ProviderScope(child: MyApp()));
 }
 
-// NAYA CODE: StatelessWidget se StatefulWidget mein convert kiya
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
@@ -51,7 +47,6 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  // NAYA CODE: App open hotay hi notification permission check aur request karega
   @override
   void initState() {
     super.initState();
@@ -71,17 +66,12 @@ class _MyAppState extends State<MyApp> {
       builder: (context, child) => MaterialApp(
         title: 'Ordo',
         debugShowCheckedModeBanner: false,
-
-        // Cupertino Widgets (iOS date picker) ko support karne ke liye
         localizationsDelegates: const [
           GlobalMaterialLocalizations.delegate,
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
-        supportedLocales: const [
-          Locale('en', 'US'), // English support
-        ],
-
+        supportedLocales: const [Locale('en', 'US')],
         theme: ThemeData.dark().copyWith(
           scaffoldBackgroundColor: Colors.black,
           colorScheme: const ColorScheme.dark(

@@ -51,12 +51,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 !(task.dueDate.year == now.year &&
                     task.dueDate.month == now.month &&
                     task.dueDate.day == now.day);
-            // Make sure overdue only counts strictly past days, or just use isBefore(now).
-            // Since home screen uses isBefore(now) to still show today's tasks if not past the exact time.
             return task.isCompleted || task.dueDate.isBefore(now);
           }).toList();
 
-          // Sort newest first
           allHistoryTasks.sort((a, b) => b.dueDate.compareTo(a.dueDate));
           _isLoading = false;
         });
@@ -79,18 +76,58 @@ class _HistoryScreenState extends State<HistoryScreen> {
     return (completedCount / allHistoryTasks.length) * 100;
   }
 
+  Future<void> _clearAllHistory() async {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1E1E1E),
+          title: Text(
+            'Clear All History?',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
+          content: Text(
+            'This action will delete all tasks in history. This cannot be undone.',
+            style: TextStyle(color: Colors.grey),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Cancel', style: TextStyle(color: Colors.grey)),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.pop(context);
+                await DatabaseHelper.instance.deleteAllTasks();
+                if (mounted) {
+                  _loadHistoryTasks();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('All history cleared'),
+                      backgroundColor: Colors.red.shade800,
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                }
+              },
+              child: Text('Delete', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   List<Task> get _filteredTasks {
     final now = DateTime.now();
     if (_selectedTabIndex == 0) {
-      return allHistoryTasks; // ALL
+      return allHistoryTasks;
     } else if (_selectedTabIndex == 1) {
-      return allHistoryTasks
-          .where((task) => task.isCompleted)
-          .toList(); // COMPLETED
+      return allHistoryTasks.where((task) => task.isCompleted).toList();
     } else {
       return allHistoryTasks
           .where((task) => !task.isCompleted && task.dueDate.isBefore(now))
-          .toList(); // OVERDUE
+          .toList();
     }
   }
 
@@ -111,6 +148,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
           ),
         ),
         automaticallyImplyLeading: false,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.delete_outline, color: Colors.white),
+            onPressed: allHistoryTasks.isEmpty ? null : _clearAllHistory,
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         child: Column(

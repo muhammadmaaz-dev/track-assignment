@@ -7,7 +7,6 @@ class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
   static Database? _database;
 
-  // A simple ValueNotifier to trigger a reload across all subscribed screens.
   final ValueNotifier<bool> onDatabaseChanged = ValueNotifier(false);
 
   DatabaseHelper._init();
@@ -44,7 +43,6 @@ class DatabaseHelper {
         attachmentPaths TEXT
       )
     ''');
-    // NAYA CODE: 'reminders TEXT' add kar diya gaya hai
   }
 
   Future<void> insertTask(Task task) async {
@@ -80,5 +78,11 @@ class DatabaseHelper {
     final result = await db.delete('tasks', where: 'id = ?', whereArgs: [id]);
     _notifyListeners();
     return result;
+  }
+
+  Future<void> deleteAllTasks() async {
+    final db = await instance.database;
+    await db.delete('tasks');
+    _notifyListeners();
   }
 }

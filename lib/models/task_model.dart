@@ -1,7 +1,7 @@
 class Task {
   final String id;
   final String title;
-  final String type; // e.g., PROJECT, ASSIGNMENT, QUIZ
+  final String type;
   final DateTime dueDate;
   final String? timeString;
   final bool isHighPriority;

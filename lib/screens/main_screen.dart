@@ -38,15 +38,11 @@ class _MainScreenState extends State<MainScreen> {
       },
       child: Scaffold(
         backgroundColor: AppColors.background,
-
         extendBody: true,
-
         body: IndexedStack(index: _currentIndex, children: _screens),
-
-        // FAB has been entirely removed
         bottomNavigationBar: TelegramNavBar(
-          margin: EdgeInsets.fromLTRB(14.w, 0, 14.w, 7.h),
-          borderRadius: BorderRadius.circular(27.r),
+          margin: const EdgeInsets.fromLTRB(14.0, 0, 14.0, 7.0),
+          borderRadius: BorderRadius.circular(27.0),
           showTopDivider: false,
           currentIndex: _currentIndex,
           onTap: (index) {

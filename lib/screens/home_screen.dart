@@ -64,17 +64,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         message: Text(task.title),
         actions: <CupertinoActionSheetAction>[
           CupertinoActionSheetAction(
-            // 1. Make this onPressed async
             onPressed: () async {
-              Navigator.pop(context); // Close the Cupertino action sheet first
-
-              // 2. Open the NewTaskSheet and pass the selected task to edit
+              Navigator.pop(context);
               final Task? updatedTask = await showCupertinoModalSheet<Task>(
                 context: context,
                 builder: (context) => NewTaskSheet(taskToEdit: task),
               );
-
-              // 3. If the user saved changes, update the DB and UI
               if (updatedTask != null) {
                 await ref
                     .read(homeTasksControllerProvider.notifier)
@@ -118,17 +113,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       floatingActionButton: Padding(
-        padding: EdgeInsets.only(bottom: 58.h),
+        padding: EdgeInsets.only(bottom: 88.h),
         child: FloatingActionButton(
-          // 1. Is function ko 'async' banayein
           onPressed: () async {
-            // 2. Naya task aane ka wait karein
             final Task? newTask = await showCupertinoModalSheet<Task>(
               context: context,
               builder: (context) => const NewTaskSheet(),
             );
 
-            // 3. Agar user ne task add kiya hai (cancel nahi kiya) to list me daal dein
             if (newTask != null) {
               await ref
                   .read(homeTasksControllerProvider.notifier)
@@ -174,7 +166,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Header
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -199,7 +190,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ],
                     ),
                     SizedBox(height: 24.h),
-                    // Today's Focus List
                     ListView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
@@ -242,7 +232,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       },
                     ),
                     SizedBox(height: 32.h),
-                    // Upcoming Header
                     Text(
                       'Upcoming',
                       style: TextStyle(
@@ -253,7 +242,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                     ),
                     SizedBox(height: 16.h),
-                    // Upcoming List
                     ListView.separated(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
@@ -287,7 +275,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         );
                       },
                     ),
-                    SizedBox(height: 80.h), // Fab space
+                    SizedBox(height: 80.h),
                   ],
                 ),
               ),

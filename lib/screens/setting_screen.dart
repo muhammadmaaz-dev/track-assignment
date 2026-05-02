@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:assignment_tracker/services/notification_helper.dart';
 import 'package:assignment_tracker/theme/constants.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // Naya import
-import 'package:assignment_tracker/screens/marks_setting_screen.dart'; // Naya import
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:assignment_tracker/screens/marks_setting_screen.dart';
 
 class SettingScreen extends StatefulWidget {
   const SettingScreen({Key? key}) : super(key: key);
@@ -22,28 +22,26 @@ class _SettingScreenState extends State<SettingScreen> {
   void initState() {
     super.initState();
     _loadNotificationSetting();
-    _loadRingSetting(); // Screen open hone par ring setting load karega
+    _loadRingSetting();
   }
 
   Future<void> _loadNotificationSetting() async {
     final enabled = await NotificationHelper.areNotificationsEnabled();
-    final ringEnabled =
-        await NotificationHelper.isRingEnabled(); // Yeh naya add karein
+    final ringEnabled = await NotificationHelper.isRingEnabled();
     if (!mounted) return;
 
     setState(() {
       _notificationsEnabled = enabled;
-      _ringed = ringEnabled; // Yeh update karein
+      _ringed = ringEnabled;
     });
   }
 
-  // Ring setting ko SharedPreferences se load karne ka function
   Future<void> _loadRingSetting() async {
     final prefs = await SharedPreferences.getInstance();
     if (!mounted) return;
 
     setState(() {
-      _ringed = prefs.getBool('ring_enabled') ?? true; // Default true rakha hai
+      _ringed = prefs.getBool('ring_enabled') ?? true;
     });
   }
 
@@ -55,12 +53,11 @@ class _SettingScreenState extends State<SettingScreen> {
     await NotificationHelper.setNotificationsEnabled(value);
   }
 
-  // Ring setting ko SharedPreferences mein save karne ka function
   Future<void> _toggleRingSetting(bool value) async {
     setState(() {
       _ringed = value;
     });
-    await NotificationHelper.setRingEnabled(value); // Yeh call karein
+    await NotificationHelper.setRingEnabled(value);
   }
 
   @override
@@ -128,14 +125,8 @@ class _SettingScreenState extends State<SettingScreen> {
                       title: 'Ring',
                       trailing: CupertinoSwitch(
                         value: _ringed,
-                        onChanged:
-                            _toggleRingSetting, // Yahan naya function attach kiya
-                        activeColor: const Color.fromARGB(
-                          194,
-                          43,
-                          203,
-                          11,
-                        ), // The track color when ON
+                        onChanged: _toggleRingSetting,
+                        activeColor: const Color.fromARGB(194, 43, 203, 11),
                         trackColor:
                             AppColors.element, // The track color when OFF
                         thumbColor: Colors.white, // The circular knob color

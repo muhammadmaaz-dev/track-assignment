@@ -5,10 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class NotificationHelper {
   static const String _notificationsEnabledKey = 'notifications_enabled';
-  static const String _ringEnabledKey =
-      'ring_enabled'; // Naya key add kiya ring ke liye
+  static const String _ringEnabledKey = 'ring_enabled';
 
-  // --- Notifications On/Off Logic ---
   static Future<bool> areNotificationsEnabled() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool(_notificationsEnabledKey) ?? true;
@@ -32,7 +30,6 @@ class NotificationHelper {
     await _rescheduleAllPendingTaskNotifications();
   }
 
-  // --- Ring On/Off Logic ---
   static Future<bool> isRingEnabled() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool(_ringEnabledKey) ?? true;
@@ -42,15 +39,12 @@ class NotificationHelper {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_ringEnabledKey, enabled);
 
-    // Agar user ring setting change karta hai, toh notifications
-    // naye channel (sound/silent) ke sath reschedule karni padengi
     if (await areNotificationsEnabled()) {
       await AwesomeNotifications().cancelAllSchedules();
       await _rescheduleAllPendingTaskNotifications();
     }
   }
 
-  // --- Scheduling Logic ---
   static Future<void> scheduleTaskNotifications(Task task) async {
     final enabled = await areNotificationsEnabled();
     if (!enabled) return;
@@ -71,30 +65,33 @@ class NotificationHelper {
   }
 
   static Future<void> _scheduleTaskNotificationsInternal(Task task) async {
-    // Basic Task ID ko integer mein convert kar rahe hain notification ID ke liye
     int baseId = task.id.hashCode;
 
-    // Yahan check kar rahe hain ke ring enabled hai ya nahi
     final ringEnabled = await isRingEnabled();
     String activeChannelKey = ringEnabled
         ? 'task_channel_sound'
         : 'task_channel_silent';
 
-    // 1. Due Date par Notification Schedule karna
     if (task.dueDate.isAfter(DateTime.now())) {
       await AwesomeNotifications().createNotification(
         content: NotificationContent(
           id: baseId,
-          channelKey: activeChannelKey, // NAYA CODE: Yahan channel set hoga
+          channelKey: activeChannelKey,
           title: '🚨 Deadline Reached!',
           body: 'Your ${task.type.toLowerCase()} "${task.title}" is due now!',
           notificationLayout: NotificationLayout.Default,
+          displayOnForeground: true,
+          icon: 'resource://drawable/notification_icon',
+          largeIcon: 'asset://assets/images/orb_icon.png',
         ),
-        schedule: NotificationCalendar.fromDate(date: task.dueDate),
+        schedule: NotificationCalendar.fromDate(
+          date: task.dueDate,
+          preciseAlarm: true,
+          allowWhileIdle: true,
+        ),
       );
     }
 
-    // 2. User ke custom Reminders par Notification Schedule karna
     for (int i = 0; i < task.reminders.length; i++) {
       String reminderString = task.reminders[i];
       DateTime? reminderTime = _calculateReminderTime(
@@ -105,26 +102,25 @@ class NotificationHelper {
       if (reminderTime != null && reminderTime.isAfter(DateTime.now())) {
         await AwesomeNotifications().createNotification(
           content: NotificationContent(
-            // Har reminder ko unique ID dene ke liye index add kiya
             id: baseId + i + 1,
-            channelKey: activeChannelKey, // NAYA CODE: Yahan channel set hoga
+            channelKey: activeChannelKey,
             title: '⏰ Reminder for ${task.title}',
             body: 'Due in $reminderString.',
             notificationLayout: NotificationLayout.Default,
+            displayOnForeground: true,
+            icon: 'resource://drawable/notification_icon',
+            largeIcon: 'asset://assets/images/orb_icon.png',
           ),
           schedule: NotificationCalendar.fromDate(
-            date: reminderTime, // ya task.dueDate
-            preciseAlarm:
-                true, // NAYA CODE: Android ko force karega exact time par bhejne ke liye
-            allowWhileIdle:
-                true, // NAYA CODE: Background/Sleep mode mein bhi chalega
+            date: reminderTime,
+            preciseAlarm: true,
+            allowWhileIdle: true,
           ),
         );
       }
     }
   }
 
-  // String ("10 min before") ko DateTime mein convert karne ka logic
   static DateTime? _calculateReminderTime(
     DateTime dueDate,
     String reminderOption,
