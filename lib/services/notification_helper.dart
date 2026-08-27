@@ -45,11 +45,31 @@ class NotificationHelper {
     }
   }
 
+  /// Upper bound on reminders per task (see [_reminderOptions] in the task
+  /// sheet). Used to cancel a stable id range without needing the live task.
+  static const int _maxRemindersPerTask = 12;
+
+  /// (Re)schedules a task's notifications. Always cancels any previously
+  /// scheduled alarms for this task first, so edits never leave stale alarms
+  /// armed. Completed or past-due tasks are cancelled and not rescheduled.
   static Future<void> scheduleTaskNotifications(Task task) async {
+    await cancelTaskNotificationsById(task.id);
+
+    if (task.isCompleted) return;
+
     final enabled = await areNotificationsEnabled();
     if (!enabled) return;
 
     await _scheduleTaskNotificationsInternal(task);
+  }
+
+  /// Cancels the deadline alarm and every reminder alarm for a task id.
+  static Future<void> cancelTaskNotificationsById(String id) async {
+    final baseId = id.hashCode;
+    await AwesomeNotifications().cancel(baseId);
+    for (int i = 1; i <= _maxRemindersPerTask; i++) {
+      await AwesomeNotifications().cancel(baseId + i);
+    }
   }
 
   static Future<void> _rescheduleAllPendingTaskNotifications() async {
@@ -82,7 +102,7 @@ class NotificationHelper {
           notificationLayout: NotificationLayout.Default,
           displayOnForeground: true,
           icon: 'resource://drawable/notification_icon',
-          largeIcon: 'asset://assets/images/orb_icon.png',
+          largeIcon: 'asset://assets/images/app_icon.png',
         ),
         schedule: NotificationCalendar.fromDate(
           date: task.dueDate,
@@ -109,7 +129,7 @@ class NotificationHelper {
             notificationLayout: NotificationLayout.Default,
             displayOnForeground: true,
             icon: 'resource://drawable/notification_icon',
-            largeIcon: 'asset://assets/images/orb_icon.png',
+            largeIcon: 'asset://assets/images/app_icon.png',
           ),
           schedule: NotificationCalendar.fromDate(
             date: reminderTime,

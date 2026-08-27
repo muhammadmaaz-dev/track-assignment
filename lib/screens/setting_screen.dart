@@ -1,13 +1,16 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:assignment_tracker/services/notification_helper.dart';
 import 'package:assignment_tracker/theme/constants.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:assignment_tracker/screens/marks_setting_screen.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SettingScreen extends StatefulWidget {
-  const SettingScreen({Key? key}) : super(key: key);
+  const SettingScreen({super.key});
 
   @override
   State<SettingScreen> createState() => _SettingScreenState();
@@ -16,13 +19,21 @@ class SettingScreen extends StatefulWidget {
 class _SettingScreenState extends State<SettingScreen> {
   bool _notificationsEnabled = true;
   bool _ringed = true;
-  bool _darkModeEnabled = true;
+  String _appVersion = '';
 
   @override
   void initState() {
     super.initState();
     _loadNotificationSetting();
-    _loadRingSetting();
+    _loadAppVersion();
+  }
+
+  Future<void> _loadAppVersion() async {
+    final info = await PackageInfo.fromPlatform();
+    if (!mounted) return;
+    setState(() {
+      _appVersion = 'v${info.version}+${info.buildNumber}';
+    });
   }
 
   Future<void> _loadNotificationSetting() async {
@@ -36,16 +47,8 @@ class _SettingScreenState extends State<SettingScreen> {
     });
   }
 
-  Future<void> _loadRingSetting() async {
-    final prefs = await SharedPreferences.getInstance();
-    if (!mounted) return;
-
-    setState(() {
-      _ringed = prefs.getBool('ring_enabled') ?? true;
-    });
-  }
-
   Future<void> _toggleNotifications(bool value) async {
+    HapticFeedback.lightImpact();
     setState(() {
       _notificationsEnabled = value;
     });
@@ -54,10 +57,34 @@ class _SettingScreenState extends State<SettingScreen> {
   }
 
   Future<void> _toggleRingSetting(bool value) async {
+    HapticFeedback.lightImpact();
     setState(() {
       _ringed = value;
     });
     await NotificationHelper.setRingEnabled(value);
+  }
+
+  Future<void> _launchURL(String urlString) async {
+    final Uri uri = Uri.parse(urlString);
+    try {
+      final launched = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (!launched) {
+        Fluttertoast.showToast(
+          msg: 'Could not open browser for $urlString',
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+        );
+      }
+    } catch (e) {
+      Fluttertoast.showToast(
+        msg: 'Could not launch link',
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+      );
+    }
   }
 
   @override
@@ -106,19 +133,19 @@ class _SettingScreenState extends State<SettingScreen> {
                       trailing: CupertinoSwitch(
                         value: _notificationsEnabled,
                         onChanged: _toggleNotifications,
-                        activeColor: const Color.fromARGB(
+                        activeTrackColor: const Color.fromARGB(
                           194,
                           43,
                           203,
                           11,
                         ), // The track color when ON
-                        trackColor:
+                        inactiveTrackColor:
                             AppColors.element, // The track color when OFF
                         thumbColor: Colors.white, // The circular knob color
                       ),
                     ),
 
-                    Divider(color: Colors.white.withOpacity(0.05), height: 1),
+                    Divider(color: Colors.white.withValues(alpha: 0.05), height: 1),
 
                     _buildSettingsRow(
                       icon: Icons.phonelink_ring_rounded,
@@ -126,14 +153,14 @@ class _SettingScreenState extends State<SettingScreen> {
                       trailing: CupertinoSwitch(
                         value: _ringed,
                         onChanged: _toggleRingSetting,
-                        activeColor: const Color.fromARGB(194, 43, 203, 11),
-                        trackColor:
+                        activeTrackColor: const Color.fromARGB(194, 43, 203, 11),
+                        inactiveTrackColor:
                             AppColors.element, // The track color when OFF
                         thumbColor: Colors.white, // The circular knob color
                       ),
                     ),
 
-                    Divider(color: Colors.white.withOpacity(0.05), height: 1),
+                    Divider(color: Colors.white.withValues(alpha: 0.05), height: 1),
 
                     _buildSettingsRow(
                       icon: Icons.my_library_books_outlined,
@@ -163,37 +190,6 @@ class _SettingScreenState extends State<SettingScreen> {
               ),
               SizedBox(height: 32.h),
 
-              // System Section
-              Text(
-                'SYSTEM',
-                style: TextStyle(
-                  color: AppColors.mutedText,
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.5,
-                ),
-              ),
-              SizedBox(height: 12.h),
-              Container(
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(20.r),
-                ),
-                child: _buildSettingsRow(
-                  icon: Icons.cloud_outlined,
-                  iconColor: AppColors.mutedText,
-                  title: 'Backup',
-                  titleColor: AppColors.mutedText,
-                  subtitle: 'Coming soon in v2.0',
-                  trailing: Icon(
-                    Icons.lock_outline,
-                    color: AppColors.mutedText,
-                    size: 20.sp,
-                  ),
-                ),
-              ),
-              SizedBox(height: 32.h),
-
               // Information Section
               Text(
                 'INFORMATION',
@@ -210,27 +206,63 @@ class _SettingScreenState extends State<SettingScreen> {
                   color: AppColors.surface,
                   borderRadius: BorderRadius.circular(20.r),
                 ),
-                child: _buildSettingsRow(
-                  icon: Icons.info_outline,
-                  title: 'About',
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'v1.4.2',
-                        style: TextStyle(
-                          color: AppColors.mutedText,
-                          fontSize: 14.sp,
-                        ),
+                child: Column(
+                  children: [
+                    _buildSettingsRow(
+                      icon: Icons.info_outline,
+                      title: 'About',
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            _appVersion.isEmpty ? '…' : _appVersion,
+                            style: TextStyle(
+                              color: AppColors.mutedText,
+                              fontSize: 14.sp,
+                            ),
+                          ),
+                          SizedBox(width: 4.w),
+                          Icon(
+                            Icons.chevron_right,
+                            color: AppColors.mutedText.withValues(alpha: 0.5),
+                            size: 20.sp,
+                          ),
+                        ],
                       ),
-                      SizedBox(width: 4.w),
-                      Icon(
+                    ),
+                    Divider(
+                      color: Colors.white.withValues(alpha: 0.05),
+                      height: 1,
+                    ),
+                    _buildSettingsRow(
+                      icon: Icons.shield_outlined,
+                      title: 'Privacy Policy',
+                      trailing: Icon(
                         Icons.chevron_right,
-                        color: AppColors.mutedText.withOpacity(0.5),
+                        color: AppColors.mutedText.withValues(alpha: 0.5),
                         size: 20.sp,
                       ),
-                    ],
-                  ),
+                      onTap: () => _launchURL(
+                        'https://www.xevonlabs.dev/products/kato/privacy',
+                      ),
+                    ),
+                    Divider(
+                      color: Colors.white.withValues(alpha: 0.05),
+                      height: 1,
+                    ),
+                    _buildSettingsRow(
+                      icon: Icons.article_outlined,
+                      title: 'Terms of Service',
+                      trailing: Icon(
+                        Icons.chevron_right,
+                        color: AppColors.mutedText.withValues(alpha: 0.5),
+                        size: 20.sp,
+                      ),
+                      onTap: () => _launchURL(
+                        'https://www.xevonlabs.dev/products/kato/terms',
+                      ),
+                    ),
+                  ],
                 ),
               ),
               SizedBox(height: 48.h),

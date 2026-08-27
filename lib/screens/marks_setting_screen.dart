@@ -1,11 +1,11 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:assignment_tracker/theme/constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class MarksSettingScreen extends StatefulWidget {
-  const MarksSettingScreen({Key? key}) : super(key: key);
+  const MarksSettingScreen({super.key});
 
   @override
   State<MarksSettingScreen> createState() => _MarksSettingScreenState();
@@ -33,6 +33,7 @@ class _MarksSettingScreenState extends State<MarksSettingScreen> {
   }
 
   Future<void> _saveMarks() async {
+    HapticFeedback.lightImpact();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(
       'marks_ASSIGNMENT',
@@ -151,9 +152,9 @@ class _MarksSettingScreenState extends State<MarksSettingScreen> {
                 child: Column(
                   children: [
                     _buildMarkInput('Assignment', _assignmentController),
-                    Divider(color: Colors.white.withOpacity(0.05), height: 1),
+                    Divider(color: Colors.white.withValues(alpha: 0.05), height: 1),
                     _buildMarkInput('Quiz', _quizController),
-                    Divider(color: Colors.white.withOpacity(0.05), height: 1),
+                    Divider(color: Colors.white.withValues(alpha: 0.05), height: 1),
                     _buildMarkInput('Project', _projectController),
                   ],
                 ),

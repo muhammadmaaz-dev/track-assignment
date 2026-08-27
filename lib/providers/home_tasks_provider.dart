@@ -124,19 +124,21 @@ class HomeTasksController extends Notifier<HomeTasksState> {
     final todaysFocusTasks = <Task>[];
     final upcomingTasks = <Task>[];
 
+    final startOfToday = DateTime(now.year, now.month, now.day);
+    final startOfTomorrow = startOfToday.add(const Duration(days: 1));
+
     for (final task in tasks) {
       if (task.isCompleted) continue;
 
-      final isToday =
-          task.dueDate.year == now.year &&
-          task.dueDate.month == now.month &&
-          task.dueDate.day == now.day;
-
-      if (task.dueDate.isBefore(now)) {
+      // Bucket by calendar day, not by exact time, so a task due earlier
+      // today still stays in "Today's Focus" instead of silently vanishing
+      // the moment its due time passes. Tasks whose day is already past are
+      // overdue and surface on the History screen instead of the home feed.
+      if (task.dueDate.isBefore(startOfToday)) {
         continue;
-      } else if (isToday) {
+      } else if (task.dueDate.isBefore(startOfTomorrow)) {
         todaysFocusTasks.add(task);
-      } else if (task.dueDate.isAfter(now)) {
+      } else {
         upcomingTasks.add(task);
       }
     }

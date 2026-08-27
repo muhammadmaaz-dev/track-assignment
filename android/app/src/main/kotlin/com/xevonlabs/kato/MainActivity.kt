@@ -1,4 +1,4 @@
-package com.example.assignment_tracker
+package com.xevonlabs.kato
 
 import io.flutter.embedding.android.FlutterActivity
 

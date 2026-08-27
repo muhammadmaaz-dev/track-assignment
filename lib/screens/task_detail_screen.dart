@@ -18,10 +18,10 @@ class TaskDetailScreen extends StatefulWidget {
   final bool isFromHistory;
 
   const TaskDetailScreen({
-    Key? key,
+    super.key,
     required this.task,
     this.isFromHistory = false,
-  }) : super(key: key);
+  });
 
   @override
   State<TaskDetailScreen> createState() => _TaskDetailScreenState();
@@ -110,11 +110,15 @@ $aiPrompt''';
             if (await f.exists()) {
               validFiles.add(XFile(path));
             }
-          } catch (e) {}
+          } catch (e) {
+            debugPrint('Error checking attachment $path: $e');
+          }
         }
 
         if (validFiles.isNotEmpty) {
-          await Share.shareXFiles(validFiles, text: textToShare);
+          await SharePlus.instance.share(
+            ShareParams(files: validFiles, text: textToShare),
+          );
         } else {
           // Provide fallback warning if OS auto-deleted the temp file since creation
           if (mounted) {
@@ -127,15 +131,15 @@ $aiPrompt''';
               ),
             );
           }
-          await Share.share(textToShare);
+          await SharePlus.instance.share(ShareParams(text: textToShare));
         }
       } catch (e) {
         debugPrint('File sharing failed: $e');
         // Fallback or just share text
-        await Share.share(textToShare);
+        await SharePlus.instance.share(ShareParams(text: textToShare));
       }
     } else {
-      await Share.share(textToShare);
+      await SharePlus.instance.share(ShareParams(text: textToShare));
     }
   }
 
@@ -152,13 +156,11 @@ $aiPrompt''';
     String val2 = '';
     String unit2 = '';
     String currentStatus = 'In Progress';
-    Color statusIconColor = Colors.white;
 
     if (difference.isNegative) {
       val1 = '0';
       unit1 = 'Late';
       currentStatus = 'Overdue';
-      statusIconColor = Colors.redAccent;
     } else if (difference.inDays > 0) {
       val1 = difference.inDays.toString();
       unit1 = 'd'; // Days
@@ -180,6 +182,15 @@ $aiPrompt''';
       unit1 = 'm'; // Mins
     }
     // --- REAL-TIME CALCULATIONS END ---
+
+    // Prefer the task's own weightage when set, otherwise fall back to the
+    // configured maximum for its type.
+    final double? taskMarks = currentTask.marks;
+    final String marksDisplay = taskMarks != null
+        ? (taskMarks == taskMarks.roundToDouble()
+              ? taskMarks.toInt().toString()
+              : taskMarks.toString())
+        : '$_marks';
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -246,7 +257,7 @@ $aiPrompt''';
                     vertical: 5.1.h,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.15),
+                    color: Colors.white.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(20.r),
                   ),
                   child: Text(
@@ -292,7 +303,7 @@ $aiPrompt''';
               children: [
                 Icon(
                   Icons.calendar_today_outlined,
-                  color: Colors.white.withOpacity(0.7),
+                  color: Colors.white.withValues(alpha: 0.7),
                   size: 16.sp,
                 ),
                 SizedBox(width: 8.w),
@@ -300,7 +311,7 @@ $aiPrompt''';
                   // Updated format: Day, Month Date, Year • Time
                   'Due ${DateFormat('EEEE, MMM d, yyyy • h:mm a').format(currentTask.dueDate)}',
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.7),
+                    color: Colors.white.withValues(alpha: 0.7),
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w500,
                   ),
@@ -340,7 +351,7 @@ $aiPrompt''';
                       Container(
                         padding: EdgeInsets.all(12.w),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.1),
+                          color: Colors.white.withValues(alpha: 0.1),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
@@ -354,6 +365,7 @@ $aiPrompt''';
                   SizedBox(height: 24.h),
                   GestureDetector(
                     onTap: () {
+                      HapticFeedback.mediumImpact();
                       Navigator.pop(
                         context,
                         true,
@@ -418,7 +430,7 @@ $aiPrompt''';
                         Text(
                           'Time left',
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.6),
+                            color: Colors.white.withValues(alpha: 0.6),
                             fontSize: 10.sp,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 1.5,
@@ -442,7 +454,7 @@ $aiPrompt''';
                             Text(
                               unit1,
                               style: TextStyle(
-                                color: Colors.white.withOpacity(0.6),
+                                color: Colors.white.withValues(alpha: 0.6),
                                 fontSize: 14.sp,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -462,7 +474,7 @@ $aiPrompt''';
                               Text(
                                 unit2,
                                 style: TextStyle(
-                                  color: Colors.white.withOpacity(0.6),
+                                  color: Colors.white.withValues(alpha: 0.6),
                                   fontSize: 14.sp,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -488,7 +500,7 @@ $aiPrompt''';
                         Text(
                           'Marks',
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.6),
+                            color: Colors.white.withValues(alpha: 0.6),
                             fontSize: 10.sp,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 1.5,
@@ -496,7 +508,7 @@ $aiPrompt''';
                         ),
                         SizedBox(height: 8.h),
                         Text(
-                          '$_marks',
+                          marksDisplay,
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 44.sp,
@@ -532,7 +544,7 @@ $aiPrompt''';
               child: Text(
                 currentTask.description ?? 'No description provided.',
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.8),
+                  color: Colors.white.withValues(alpha: 0.8),
                   fontSize: 15.sp,
                   height: 1.6,
                 ),
@@ -564,7 +576,7 @@ $aiPrompt''';
                       currentTask.attachmentPaths!.isEmpty)
                   ? Text(
                       'No attachments provided.',
-                      style: TextStyle(color: Colors.white.withOpacity(0.5)),
+                      style: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
                     )
                   : Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -576,10 +588,12 @@ $aiPrompt''';
                             .toLowerCase();
 
                         IconData icon = Icons.insert_drive_file_outlined;
-                        if (extension == 'pdf')
+                        if (extension == 'pdf') {
                           icon = Icons.picture_as_pdf_outlined;
-                        if (['jpg', 'jpeg', 'png'].contains(extension))
+                        }
+                        if (['jpg', 'jpeg', 'png'].contains(extension)) {
                           icon = Icons.image_outlined;
+                        }
 
                         return GestureDetector(
                           onTap: () async {
@@ -592,10 +606,10 @@ $aiPrompt''';
                               vertical: 10.h,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.2),
+                              color: Colors.black.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(12.r),
                               border: Border.all(
-                                color: Colors.white.withOpacity(0.05),
+                                color: Colors.white.withValues(alpha: 0.05),
                               ),
                             ),
                             child: Row(
@@ -616,7 +630,7 @@ $aiPrompt''';
                                 SizedBox(width: 8.w),
                                 Icon(
                                   Icons.open_in_new,
-                                  color: Colors.white.withOpacity(0.5),
+                                  color: Colors.white.withValues(alpha: 0.5),
                                   size: 18.sp,
                                 ),
                               ],
@@ -665,28 +679,6 @@ $aiPrompt''';
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildChecklistItem(String title, bool isChecked) {
-    return Row(
-      children: [
-        Icon(
-          isChecked ? Icons.check_box : Icons.check_box_outline_blank,
-          color: isChecked ? Colors.white : Colors.white.withOpacity(0.3),
-          size: 28.sp,
-        ),
-        SizedBox(width: 16.w),
-        Text(
-          title,
-          style: TextStyle(
-            color: Colors.white.withOpacity(0.9),
-            fontSize: 16.sp,
-            fontWeight: FontWeight.w500,
-            decoration: isChecked ? TextDecoration.lineThrough : null,
-          ),
-        ),
-      ],
     );
   }
 }

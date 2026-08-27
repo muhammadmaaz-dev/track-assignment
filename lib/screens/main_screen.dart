@@ -3,7 +3,7 @@ import 'package:assignment_tracker/screens/home_screen.dart';
 import 'package:assignment_tracker/screens/setting_screen.dart';
 import 'package:assignment_tracker/theme/constants.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter/services.dart';
 import 'package:telegram_nav_bar/telegram_nav_bar.dart';
 
 class MainScreen extends StatefulWidget {
@@ -46,6 +46,7 @@ class _MainScreenState extends State<MainScreen> {
           showTopDivider: false,
           currentIndex: _currentIndex,
           onTap: (index) {
+            HapticFeedback.lightImpact();
             setState(() {
               _currentIndex = index;
             });

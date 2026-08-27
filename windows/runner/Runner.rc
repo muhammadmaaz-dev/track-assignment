@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "assignment_tracker" "\0"
+            VALUE "CompanyName", "Xevon Labs" "\0"
+            VALUE "FileDescription", "Kato" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "assignment_tracker" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 com.example. All rights reserved." "\0"
-            VALUE "OriginalFilename", "assignment_tracker.exe" "\0"
-            VALUE "ProductName", "assignment_tracker" "\0"
+            VALUE "InternalName", "kato" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 Xevon Labs. All rights reserved." "\0"
+            VALUE "OriginalFilename", "kato.exe" "\0"
+            VALUE "ProductName", "Kato" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

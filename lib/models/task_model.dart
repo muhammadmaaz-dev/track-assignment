@@ -9,6 +9,7 @@ class Task {
   final bool isCompleted;
   final List<String> reminders;
   final List<String>? attachmentPaths;
+  final double? marks;
 
   Task({
     required this.id,
@@ -21,6 +22,7 @@ class Task {
     this.isCompleted = false,
     this.reminders = const [],
     this.attachmentPaths,
+    this.marks,
   });
 
   Task copyWith({
@@ -34,6 +36,7 @@ class Task {
     bool? isCompleted,
     List<String>? reminders,
     List<String>? attachmentPaths,
+    double? marks,
   }) {
     return Task(
       id: id ?? this.id,
@@ -46,6 +49,7 @@ class Task {
       isCompleted: isCompleted ?? this.isCompleted,
       reminders: reminders ?? this.reminders,
       attachmentPaths: attachmentPaths ?? this.attachmentPaths,
+      marks: marks ?? this.marks,
     );
   }
 
@@ -61,6 +65,7 @@ class Task {
       'isCompleted': isCompleted ? 1 : 0,
       'reminders': reminders.join(','),
       'attachmentPaths': attachmentPaths?.join(','),
+      'marks': marks,
     };
   }
 
@@ -83,6 +88,7 @@ class Task {
               map['attachmentPaths'].toString().isNotEmpty
           ? map['attachmentPaths'].toString().split(',')
           : [],
+      marks: map['marks'] != null ? (map['marks'] as num).toDouble() : null,
     );
   }
 }

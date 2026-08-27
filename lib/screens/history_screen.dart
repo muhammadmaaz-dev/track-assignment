@@ -1,8 +1,10 @@
 import 'package:assignment_tracker/utils/string_extensions.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import '../models/task_model.dart';
+import '../widgets/task_widgets.dart';
 import 'task_detail_screen.dart';
 import '../services/db_helper.dart';
 
@@ -46,11 +48,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
       if (mounted) {
         setState(() {
           allHistoryTasks = allTasks.where((task) {
-            bool isPastDue =
-                task.dueDate.isBefore(now) &&
-                !(task.dueDate.year == now.year &&
-                    task.dueDate.month == now.month &&
-                    task.dueDate.day == now.day);
             return task.isCompleted || task.dueDate.isBefore(now);
           }).toList();
 
@@ -77,6 +74,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   Future<void> _clearAllHistory() async {
+    // Only the tasks currently surfaced in History are eligible — active
+    // upcoming tasks must never be swept away by this action.
+    final tasksToDelete = List<Task>.from(allHistoryTasks);
+    if (tasksToDelete.isEmpty) return;
+
+    HapticFeedback.mediumImpact();
+    final messenger = ScaffoldMessenger.of(context);
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -87,7 +92,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
           ),
           content: Text(
-            'This action will delete all tasks in history. This cannot be undone.',
+            'This will remove ${tasksToDelete.length} archived '
+            '${tasksToDelete.length == 1 ? 'task' : 'tasks'} from history. '
+            'You can undo this right after.',
             style: TextStyle(color: Colors.grey),
           ),
           actions: [
@@ -97,18 +104,28 @@ class _HistoryScreenState extends State<HistoryScreen> {
             ),
             TextButton(
               onPressed: () async {
+                HapticFeedback.heavyImpact();
                 Navigator.pop(context);
-                await DatabaseHelper.instance.deleteAllTasks();
-                if (mounted) {
-                  _loadHistoryTasks();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('All history cleared'),
-                      backgroundColor: Colors.red.shade800,
-                      duration: Duration(seconds: 2),
+                await DatabaseHelper.instance.deleteTasks(
+                  tasksToDelete.map((t) => t.id).toList(),
+                );
+                if (!mounted) return;
+                messenger.hideCurrentSnackBar();
+                messenger.showSnackBar(
+                  SnackBar(
+                    content: const Text('History cleared'),
+                    backgroundColor: const Color(0xFF1E1E1E),
+                    behavior: SnackBarBehavior.floating,
+                    duration: const Duration(seconds: 5),
+                    action: SnackBarAction(
+                      label: 'Undo',
+                      textColor: Colors.white,
+                      onPressed: () {
+                        DatabaseHelper.instance.restoreTasks(tasksToDelete);
+                      },
                     ),
-                  );
-                }
+                  ),
+                );
               },
               child: Text('Delete', style: TextStyle(color: Colors.red)),
             ),
@@ -128,6 +145,122 @@ class _HistoryScreenState extends State<HistoryScreen> {
       return allHistoryTasks
           .where((task) => !task.isCompleted && task.dueDate.isBefore(now))
           .toList();
+    }
+  }
+
+  Future<bool> _confirmDelete(Task task) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1E1E1E),
+          title: const Text(
+            'Delete Task?',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
+          content: Text(
+            'Remove "${task.title}" from history? You can undo this right after.',
+            style: const TextStyle(color: Colors.grey),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+            ),
+            TextButton(
+              onPressed: () {
+                HapticFeedback.heavyImpact();
+                Navigator.pop(context, true);
+              },
+              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
+    return confirmed ?? false;
+  }
+
+  Future<void> _deleteTaskWithUndo(Task task) async {
+    final messenger = ScaffoldMessenger.of(context);
+    await DatabaseHelper.instance.deleteTask(task.id);
+    if (!mounted) return;
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
+      SnackBar(
+        content: const Text('Task deleted'),
+        backgroundColor: const Color(0xFF1E1E1E),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 5),
+        action: SnackBarAction(
+          label: 'Undo',
+          textColor: Colors.white,
+          onPressed: () {
+            DatabaseHelper.instance.restoreTasks([task]);
+          },
+        ),
+      ),
+    );
+  }
+
+  /// Swipe-right toggles completion for the archived task (overdue → done and
+  /// back). Persists via updateTask; the change-notifier rebuild reflects it.
+  Future<void> _toggleComplete(Task task) async {
+    HapticFeedback.mediumImpact();
+    await DatabaseHelper.instance.updateTask(
+      task.copyWith(isCompleted: !task.isCompleted),
+    );
+  }
+
+  /// confirmDismiss handler for archive cards. Left swipe asks to delete (the
+  /// removal + undo runs in onDismissed); right swipe toggles completion and
+  /// returns false so the widget stays in the tree.
+  Future<bool> _onSwipe(DismissDirection direction, Task task) async {
+    if (direction == DismissDirection.endToStart) {
+      return _confirmDelete(task);
+    } else {
+      await _toggleComplete(task);
+      return false;
+    }
+  }
+
+  Widget _swipeBackground({required bool isDelete}) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 16.0),
+      padding: EdgeInsets.symmetric(horizontal: 24.w),
+      decoration: BoxDecoration(
+        color: isDelete ? Colors.red : Colors.green,
+        borderRadius: BorderRadius.circular(20.r),
+      ),
+      alignment: isDelete ? Alignment.centerRight : Alignment.centerLeft,
+      child: Icon(
+        isDelete ? Icons.delete_outline : Icons.check_circle_outline,
+        color: Colors.white,
+        size: 26.sp,
+      ),
+    );
+  }
+
+  EmptyState _emptyStateForTab() {
+    switch (_selectedTabIndex) {
+      case 1:
+        return const EmptyState(
+          icon: Icons.check_circle_outline,
+          title: 'No completed tasks yet.',
+          subtitle: 'Finished assignments will land here.',
+        );
+      case 2:
+        return const EmptyState(
+          icon: Icons.event_busy_outlined,
+          title: 'Nothing overdue.',
+          subtitle: 'You are all on schedule — nice work.',
+        );
+      default:
+        return const EmptyState(
+          icon: Icons.inventory_2_outlined,
+          title: 'No history yet.',
+          subtitle: 'Completed and past-due tasks will appear here.',
+        );
     }
   }
 
@@ -221,13 +354,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 ? SizedBox.shrink() // Prevents flicker
                 : _filteredTasks.isEmpty
                 ? Padding(
-                    padding: EdgeInsets.all(40.0.w),
-                    child: Center(
-                      child: Text(
-                        'No history available',
-                        style: TextStyle(color: Colors.grey),
-                      ),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 17.w,
+                      vertical: 24.h,
                     ),
+                    child: _emptyStateForTab(),
                   )
                 : Padding(
                     padding: EdgeInsets.symmetric(horizontal: 17.w),
@@ -256,42 +387,56 @@ class _HistoryScreenState extends State<HistoryScreen> {
                             );
                           }
 
-                          return Padding(
-                            padding: EdgeInsets.only(bottom: 16.0),
-                            child: GestureDetector(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => TaskDetailScreen(
-                                      task: task,
-                                      isFromHistory: true,
+                          return Dismissible(
+                            key: ValueKey(task.id),
+                            background: _swipeBackground(isDelete: false),
+                            secondaryBackground: _swipeBackground(
+                              isDelete: true,
+                            ),
+                            confirmDismiss: (direction) =>
+                                _onSwipe(direction, task),
+                            onDismissed: (direction) {
+                              if (direction == DismissDirection.endToStart) {
+                                _deleteTaskWithUndo(task);
+                              }
+                            },
+                            child: Padding(
+                              padding: EdgeInsets.only(bottom: 16.0),
+                              child: GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => TaskDetailScreen(
+                                        task: task,
+                                        isFromHistory: true,
+                                      ),
                                     ),
-                                  ),
-                                ).then((_) {
-                                  // Refresh when coming back
-                                  _loadHistoryTasks();
-                                });
-                              },
-                              child: _buildArchiveCard(
-                                title: task.title,
-                                date: DateFormat(
-                                  'MMM d, yyyy',
-                                ).format(task.dueDate),
-                                isOverdue: isOverdue,
-                                isCompleted: task.isCompleted,
-                                footers: footers.isEmpty
-                                    ? [
-                                        _buildFooterItem(
-                                          Icons.info_outline,
-                                          task.type.toSentenceCase(),
-                                        ),
-                                      ]
-                                    : footers,
+                                  ).then((_) {
+                                    // Refresh when coming back
+                                    _loadHistoryTasks();
+                                  });
+                                },
+                                child: _buildArchiveCard(
+                                  title: task.title,
+                                  date: DateFormat(
+                                    'MMM d, yyyy',
+                                  ).format(task.dueDate),
+                                  isOverdue: isOverdue,
+                                  isCompleted: task.isCompleted,
+                                  footers: footers.isEmpty
+                                      ? [
+                                          _buildFooterItem(
+                                            Icons.info_outline,
+                                            task.type.toSentenceCase(),
+                                          ),
+                                        ]
+                                      : footers,
+                                ),
                               ),
                             ),
                           );
-                        }).toList(),
+                        }),
                         SizedBox(height: 80.h),
                       ],
                     ),
@@ -306,6 +451,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     bool isSelected = _selectedTabIndex == index;
     return GestureDetector(
       onTap: () {
+        HapticFeedback.lightImpact();
         setState(() {
           _selectedTabIndex = index;
         });
@@ -411,17 +557,17 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 ),
                 decoration: BoxDecoration(
                   color: isCompleted
-                      ? Colors.white.withOpacity(0.1)
+                      ? Colors.white.withValues(alpha: 0.1)
                       : (isOverdue
-                            ? Colors.red.withOpacity(0.2)
-                            : Colors.orange.withOpacity(0.2)),
+                            ? Colors.red.withValues(alpha: 0.2)
+                            : Colors.orange.withValues(alpha: 0.2)),
                   borderRadius: BorderRadius.circular(20.r),
                   border: isCompleted
                       ? null
                       : (isOverdue
-                            ? Border.all(color: Colors.red.withOpacity(0.3))
+                            ? Border.all(color: Colors.red.withValues(alpha: 0.3))
                             : Border.all(
-                                color: Colors.orange.withOpacity(0.3),
+                                color: Colors.orange.withValues(alpha: 0.3),
                               )),
                 ),
                 child: Row(

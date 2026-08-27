@@ -2,12 +2,13 @@ import 'package:assignment_tracker/utils/string_extensions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../models/task_model.dart';
+import '../theme/constants.dart';
 import 'package:intl/intl.dart';
 
 class TodaysFocusCard extends StatelessWidget {
   final Task task;
 
-  const TodaysFocusCard({Key? key, required this.task}) : super(key: key);
+  const TodaysFocusCard({super.key, required this.task});
 
   @override
   Widget build(BuildContext context) {
@@ -106,7 +107,7 @@ class TodaysFocusCard extends StatelessWidget {
 class UpcomingTaskTile extends StatelessWidget {
   final Task task;
 
-  const UpcomingTaskTile({Key? key, required this.task}) : super(key: key);
+  const UpcomingTaskTile({super.key, required this.task});
 
   @override
   Widget build(BuildContext context) {
@@ -156,5 +157,67 @@ class UpcomingTaskTile extends StatelessWidget {
     } else {
       return 'DUE ${DateFormat('EEEE').format(date)}'; // Extends to DUE FRIDAY, etc.
     }
+  }
+}
+
+/// Reusable, minimalistic OLED-dark empty state used across the Home and
+/// History feeds. Muted typography (#8E8E93) with a subtle outline icon and an
+/// optional inline action button.
+class EmptyState extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String? subtitle;
+  final Widget? action;
+
+  const EmptyState({
+    super.key,
+    required this.icon,
+    required this.title,
+    this.subtitle,
+    this.action,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 40.w, vertical: 32.h),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 56.sp,
+              color: AppColors.mutedText.withValues(alpha: 0.5),
+            ),
+            SizedBox(height: 16.h),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: AppColors.mutedText,
+                fontSize: 16.sp,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            if (subtitle != null) ...[
+              SizedBox(height: 8.h),
+              Text(
+                subtitle!,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: AppColors.mutedText.withValues(alpha: 0.7),
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w400,
+                  height: 1.4,
+                ),
+              ),
+            ],
+            if (action != null) ...[SizedBox(height: 24.h), action!],
+          ],
+        ),
+      ),
+    );
   }
 }

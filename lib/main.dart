@@ -1,9 +1,12 @@
 import 'package:assignment_tracker/screens/main_screen.dart';
+import 'package:assignment_tracker/screens/onboarding_screen.dart';
+import 'package:assignment_tracker/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -36,26 +39,18 @@ void main() async {
     ),
   ]);
 
-  runApp(const ProviderScope(child: MyApp()));
+  final prefs = await SharedPreferences.getInstance();
+  final bool hasSeenOnboarding = prefs.getBool('has_seen_onboarding') ?? false;
+
+  runApp(ProviderScope(
+    child: MyApp(hasSeenOnboarding: hasSeenOnboarding),
+  ));
 }
 
-class MyApp extends StatefulWidget {
-  const MyApp({super.key});
+class MyApp extends StatelessWidget {
+  final bool hasSeenOnboarding;
 
-  @override
-  State<MyApp> createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> {
-  @override
-  void initState() {
-    super.initState();
-    AwesomeNotifications().isNotificationAllowed().then((isAllowed) {
-      if (!isAllowed) {
-        AwesomeNotifications().requestPermissionToSendNotifications();
-      }
-    });
-  }
+  const MyApp({super.key, this.hasSeenOnboarding = false});
 
   @override
   Widget build(BuildContext context) {
@@ -64,7 +59,7 @@ class _MyAppState extends State<MyApp> {
       minTextAdapt: true,
       splitScreenMode: true,
       builder: (context, child) => MaterialApp(
-        title: 'Ordo',
+        title: 'Kato',
         debugShowCheckedModeBanner: false,
         localizationsDelegates: const [
           GlobalMaterialLocalizations.delegate,
@@ -72,14 +67,10 @@ class _MyAppState extends State<MyApp> {
           GlobalCupertinoLocalizations.delegate,
         ],
         supportedLocales: const [Locale('en', 'US')],
-        theme: ThemeData.dark().copyWith(
-          scaffoldBackgroundColor: Colors.black,
-          colorScheme: const ColorScheme.dark(
-            primary: Colors.white,
-            secondary: Colors.white,
-          ),
-        ),
-        home: const MainScreen(),
+        theme: AppTheme.darkTheme,
+        home: hasSeenOnboarding
+            ? const MainScreen()
+            : const OnboardingScreen(),
       ),
     );
   }

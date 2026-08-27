@@ -1,18 +1,17 @@
-import 'dart:ui';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'package:file_picker/file_picker.dart';
 import 'package:assignment_tracker/models/task_model.dart';
-import 'package:assignment_tracker/services/notification_helper.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:assignment_tracker/theme/constants.dart';
 import 'package:cupertino_calendar_picker/cupertino_calendar_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:open_filex/open_filex.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class NewTaskSheet extends StatefulWidget {
   final Task? taskToEdit;
@@ -27,6 +26,17 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
   String _selectedType = 'Assignment';
   final title = TextEditingController();
   final description = TextEditingController();
+  final marks = TextEditingController();
+
+  // Configured maximum marks per type, sourced from the Set Marks screen.
+  final Map<String, int> _configuredMarks = {
+    'Assignment': 0,
+    'Quiz': 0,
+    'Project': 0,
+  };
+  // Once the user types their own value we stop auto-filling from the
+  // configured defaults on type switches.
+  bool _marksManuallyEdited = false;
 
   DateTime _selectedDateTime = DateTime.now();
 
@@ -56,24 +66,62 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
       title.text = t.title;
       description.text = t.description ?? '';
 
-      if (t.type.toUpperCase() == 'ASSIGNMENT')
+      if (t.type.toUpperCase() == 'ASSIGNMENT') {
         _selectedType = 'Assignment';
-      else if (t.type.toUpperCase() == 'QUIZ')
+      } else if (t.type.toUpperCase() == 'QUIZ') {
         _selectedType = 'Quiz';
-      else if (t.type.toUpperCase() == 'PROJECT')
+      } else if (t.type.toUpperCase() == 'PROJECT') {
         _selectedType = 'Project';
-      else
+      } else {
         _selectedType = t.type;
+      }
 
       _selectedDateTime = t.dueDate;
 
-      if (t.reminders != null) {
-        _selectedReminders = List.from(t.reminders!);
-      }
+      _selectedReminders = List.from(t.reminders);
       if (t.attachmentPaths != null) {
         _attachmentPaths = List.from(t.attachmentPaths!);
       }
+      if (t.marks != null) {
+        marks.text = _formatMarks(t.marks!);
+        _marksManuallyEdited = true;
+      }
     }
+
+    _loadConfiguredMarks();
+  }
+
+  /// Reads the per-type maximum marks configured on the Set Marks screen and,
+  /// for a fresh task, pre-fills the field with the default for the current
+  /// type so weightage stays linked to the user's global configuration.
+  Future<void> _loadConfiguredMarks() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() {
+      _configuredMarks['Assignment'] = prefs.getInt('marks_ASSIGNMENT') ?? 0;
+      _configuredMarks['Quiz'] = prefs.getInt('marks_QUIZ') ?? 0;
+      _configuredMarks['Project'] = prefs.getInt('marks_PROJECT') ?? 0;
+
+      if (!_marksManuallyEdited && marks.text.trim().isEmpty) {
+        final def = _configuredMarks[_selectedType] ?? 0;
+        if (def > 0) marks.text = def.toString();
+      }
+    });
+  }
+
+  // Renders 90.0 as "90" but preserves genuine decimals like "87.5".
+  String _formatMarks(double value) {
+    return value == value.roundToDouble()
+        ? value.toInt().toString()
+        : value.toString();
+  }
+
+  @override
+  void dispose() {
+    title.dispose();
+    description.dispose();
+    marks.dispose();
+    super.dispose();
   }
 
   Future<void> _pickFiles() async {
@@ -93,7 +141,6 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
       for (var file in result.files) {
         if (file.path != null) {
           final File tempFile = File(file.path!);
-          final String fileExtension = p.extension(file.path!);
           final String uniqueFileName =
               '${DateTime.now().millisecondsSinceEpoch}_${file.name}';
           final String stablePath = p.join(destinationDir.path, uniqueFileName);
@@ -194,7 +241,7 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
                             _reminderOptions[tempSelectedIndex];
 
                         Duration requiredDuration = Duration.zero;
-                        if (chosenOption.contains('minute')) {
+                        if (chosenOption.contains('min')) {
                           requiredDuration = Duration(
                             minutes: int.parse(chosenOption.split(' ').first),
                           );
@@ -283,19 +330,32 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
     return Material(
       color: Colors.transparent,
       child: Center(
-        child: Container(
-          // Keep height somewhat shorter to visually show it's a sheet,
-          // the cupertino modal sheet already leaves a gap naturally.
-          constraints: const BoxConstraints(maxWidth: 600),
-          height: MediaQuery.of(context).size.height * 0.92,
-          decoration: const BoxDecoration(
-            color: AppColors.background,
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(20.0),
-              topRight: Radius.circular(20.0),
+        child: TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0.0, end: 1.0),
+          duration: const Duration(milliseconds: 320),
+          curve: Curves.easeOutCubic,
+          builder: (context, value, child) {
+            return Opacity(
+              opacity: value.clamp(0.0, 1.0),
+              child: Transform.translate(
+                offset: Offset(0, (1 - value) * 40),
+                child: child,
+              ),
+            );
+          },
+          child: Container(
+            // Keep height somewhat shorter to visually show it's a sheet,
+            // the cupertino modal sheet already leaves a gap naturally.
+            constraints: const BoxConstraints(maxWidth: 600),
+            height: MediaQuery.of(context).size.height * 0.92,
+            decoration: const BoxDecoration(
+              color: AppColors.background,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(20.0),
+                topRight: Radius.circular(20.0),
+              ),
             ),
-          ),
-          child: Column(
+            child: Column(
             children: [
               Padding(
                 padding: const EdgeInsets.symmetric(
@@ -341,7 +401,7 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
                   ],
                 ),
               ),
-              Divider(color: Colors.white.withOpacity(0.1), height: 1),
+              Divider(color: Colors.white.withValues(alpha: 0.1), height: 1),
 
               Expanded(
                 child: SingleChildScrollView(
@@ -351,6 +411,7 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
                     children: [
                       TextField(
                         controller: title,
+                        autofocus: widget.taskToEdit == null,
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 32.sp,
@@ -359,7 +420,7 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
                         decoration: InputDecoration(
                           hintText: 'Enter task title',
                           hintStyle: TextStyle(
-                            color: Colors.white.withOpacity(0.2),
+                            color: Colors.white.withValues(alpha: 0.2),
                             fontSize: 32.sp,
                             fontWeight: FontWeight.bold,
                           ),
@@ -401,6 +462,9 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
                       ),
                       SizedBox(height: 24.h),
 
+                      _buildMarksCard(),
+                      SizedBox(height: 24.h),
+
                       Container(
                         decoration: BoxDecoration(
                           color: AppColors.surface,
@@ -414,14 +478,14 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
                               children: [
                                 Icon(
                                   Icons.notes,
-                                  color: Colors.white.withOpacity(0.7),
+                                  color: Colors.white.withValues(alpha: 0.7),
                                   size: 20.sp,
                                 ),
                                 SizedBox(width: 12.w),
                                 Text(
                                   'NOTES / QUESTIONS',
                                   style: TextStyle(
-                                    color: Colors.white.withOpacity(0.7),
+                                    color: Colors.white.withValues(alpha: 0.7),
                                     fontSize: 12.sp,
                                     fontWeight: FontWeight.bold,
                                     letterSpacing: 1.2,
@@ -440,7 +504,7 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
                               decoration: InputDecoration(
                                 hintText: 'Add questions or notes',
                                 hintStyle: TextStyle(
-                                  color: Colors.white.withOpacity(0.3),
+                                  color: Colors.white.withValues(alpha: 0.3),
                                   fontSize: 16.sp,
                                 ),
                                 border: InputBorder.none,
@@ -474,7 +538,7 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
                                   color: Colors.black,
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                    color: Colors.white.withOpacity(0.1),
+                                    color: Colors.white.withValues(alpha: 0.1),
                                   ),
                                 ),
                                 child: Icon(
@@ -503,7 +567,7 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
                                       Text(
                                         'Tap anywhere to add files', // Updated UX text
                                         style: TextStyle(
-                                          color: Colors.white.withOpacity(0.5),
+                                          color: Colors.white.withValues(alpha: 0.5),
                                         ),
                                       )
                                     else
@@ -518,14 +582,16 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
 
                                         IconData icon =
                                             Icons.insert_drive_file_outlined;
-                                        if (extension == 'pdf')
+                                        if (extension == 'pdf') {
                                           icon = Icons.picture_as_pdf_outlined;
+                                        }
                                         if ([
                                           'jpg',
                                           'jpeg',
                                           'png',
-                                        ].contains(extension))
+                                        ].contains(extension)) {
                                           icon = Icons.image_outlined;
+                                        }
 
                                         return Container(
                                           margin: EdgeInsets.only(bottom: 8.0),
@@ -534,14 +600,14 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
                                             vertical: 10,
                                           ),
                                           decoration: BoxDecoration(
-                                            color: Colors.black.withOpacity(
+                                            color: Colors.black.withValues(alpha: 
                                               0.2,
                                             ), // Dark inset background
                                             borderRadius: BorderRadius.circular(
                                               12,
                                             ),
                                             border: Border.all(
-                                              color: Colors.white.withOpacity(
+                                              color: Colors.white.withValues(alpha: 
                                                 0.05,
                                               ),
                                             ),
@@ -583,7 +649,7 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
                                                   child: Icon(
                                                     Icons.close,
                                                     color: Colors.white
-                                                        .withOpacity(0.5),
+                                                        .withValues(alpha: 0.5),
                                                     size: 20.sp,
                                                   ),
                                                 ),
@@ -591,7 +657,7 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
                                             ],
                                           ),
                                         );
-                                      }).toList(),
+                                      }),
                                   ],
                                 ),
                               ),
@@ -600,7 +666,7 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
                         ),
                       ),
                       SizedBox(height: 24.h),
-                      Divider(color: Colors.white.withOpacity(0.1), height: 1),
+                      Divider(color: Colors.white.withValues(alpha: 0.1), height: 1),
                       SizedBox(height: 24.h),
 
                       Row(
@@ -644,7 +710,7 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
                               child: Text(
                                 'Empty',
                                 style: TextStyle(
-                                  color: Colors.white.withOpacity(0.2),
+                                  color: Colors.white.withValues(alpha: 0.2),
                                   fontSize: 16.sp,
                                 ),
                               ),
@@ -666,7 +732,7 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
                                       children: [
                                         Icon(
                                           Icons.notifications_active,
-                                          color: Colors.white.withOpacity(0.8),
+                                          color: Colors.white.withValues(alpha: 0.8),
                                           size: 20.sp,
                                         ),
                                         SizedBox(width: 16.w),
@@ -690,7 +756,7 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
                                           },
                                           child: Icon(
                                             Icons.close,
-                                            color: Colors.white.withOpacity(
+                                            color: Colors.white.withValues(alpha: 
                                               0.5,
                                             ),
                                             size: 20.sp,
@@ -744,6 +810,10 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
 
                       Task userCreatedTask;
 
+                      final double? parsedMarks = marks.text.trim().isEmpty
+                          ? null
+                          : double.tryParse(marks.text.trim());
+
                       // If editing, use copyWith to preserve the ID and other original states
                       if (widget.taskToEdit != null) {
                         userCreatedTask = widget.taskToEdit!.copyWith(
@@ -753,6 +823,7 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
                           description: description.text.trim(),
                           reminders: _selectedReminders,
                           attachmentPaths: _attachmentPaths,
+                          marks: parsedMarks,
                         );
                       } else {
                         userCreatedTask = Task(
@@ -763,13 +834,14 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
                           description: description.text.trim(),
                           reminders: _selectedReminders,
                           attachmentPaths: _attachmentPaths,
+                          marks: parsedMarks,
                         );
                       }
 
-                      NotificationHelper.scheduleTaskNotifications(
-                        userCreatedTask,
-                      );
-
+                      // Notification scheduling is handled centrally by the
+                      // data layer (DatabaseHelper) when the task is persisted,
+                      // so every create/edit path stays consistent.
+                      HapticFeedback.lightImpact();
                       Navigator.pop(context, userCreatedTask);
                     },
                     style: ElevatedButton.styleFrom(
@@ -793,6 +865,7 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
             ],
           ),
         ),
+        ),
       ),
     );
   }
@@ -802,8 +875,15 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
     return Expanded(
       child: GestureDetector(
         onTap: () {
+          HapticFeedback.lightImpact();
           setState(() {
             _selectedType = titleStr;
+            // Keep the weightage aligned with the newly selected type's
+            // configured default unless the user has customised it.
+            if (!_marksManuallyEdited) {
+              final def = _configuredMarks[_selectedType] ?? 0;
+              marks.text = def > 0 ? def.toString() : '';
+            }
           });
         },
         child: Container(
@@ -815,12 +895,80 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
           child: Text(
             titleStr,
             style: TextStyle(
-              color: isSelected ? Colors.black : Colors.white.withOpacity(0.7),
+              color: isSelected ? Colors.black : Colors.white.withValues(alpha: 0.7),
               fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
               fontSize: 14.sp,
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildMarksCard() {
+    final int configuredMax = _configuredMarks[_selectedType] ?? 0;
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(25.r),
+      ),
+      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.all(8.w),
+            decoration: BoxDecoration(
+              color: Colors.black,
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+            ),
+            child: Icon(Icons.grade_outlined, color: Colors.white, size: 17.w),
+          ),
+          SizedBox(width: 16.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Marks / Weightage',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.6),
+                    fontSize: 12.sp,
+                  ),
+                ),
+                SizedBox(height: 2.h),
+                TextField(
+                  controller: marks,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                  ],
+                  onChanged: (_) => _marksManuallyEdited = true,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  decoration: InputDecoration(
+                    isDense: true,
+                    contentPadding: EdgeInsets.zero,
+                    border: InputBorder.none,
+                    hintText: configuredMax > 0
+                        ? 'Out of $configuredMax (optional)'
+                        : 'Optional',
+                    hintStyle: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.3),
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -846,7 +994,7 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
               decoration: BoxDecoration(
                 color: Colors.black,
                 shape: BoxShape.circle,
-                border: Border.all(color: Colors.white.withOpacity(0.1)),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
               ),
               child: Icon(icon, color: Colors.white, size: 17.w),
             ),
@@ -858,7 +1006,7 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
                   Text(
                     label,
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.6),
+                      color: Colors.white.withValues(alpha: 0.6),
                       fontSize: 12.sp,
                     ),
                   ),
@@ -874,81 +1022,8 @@ class _NewTaskSheetState extends State<NewTaskSheet> {
                 ],
               ),
             ),
-            Icon(Icons.chevron_right, color: Colors.white.withOpacity(0.5)),
+            Icon(Icons.chevron_right, color: Colors.white.withValues(alpha: 0.5)),
           ],
-        ),
-      ),
-    );
-  }
-
-  // Moved inside the State class so it can be used properly
-  Widget _buildAttachmentItem({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-  }) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20.r),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-        child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.08),
-            borderRadius: BorderRadius.circular(20.r),
-            border: Border.all(
-              color: Colors.white.withOpacity(0.12),
-              width: 0.5,
-            ),
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: EdgeInsets.all(12.w),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(14.r),
-                ),
-                child: Icon(icon, color: Colors.white, size: 18.7.w),
-              ),
-              SizedBox(width: 16.w),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: -0.3,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    SizedBox(height: 4.h),
-                    Text(
-                      subtitle,
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.6),
-                        fontSize: 13.sp,
-                        letterSpacing: -0.1,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(width: 12.w),
-              Icon(
-                Icons.arrow_forward_ios_rounded,
-                color: Colors.white.withOpacity(0.3),
-                size: 16.sp,
-              ),
-            ],
-          ),
         ),
       ),
     );
