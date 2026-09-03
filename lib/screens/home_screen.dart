@@ -8,6 +8,7 @@ import '../models/task_model.dart';
 import '../providers/home_tasks_provider.dart';
 import '../widgets/task_widgets.dart';
 import '../services/db_helper.dart';
+import '../services/app_update_and_review_service.dart';
 import 'new_task_sheet.dart';
 import 'task_detail_screen.dart';
 import 'dart:async';
@@ -26,6 +27,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   void initState() {
     super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        AppUpdateAndReviewService.instance.initStartupPrompts();
+      }
+    });
 
     _databaseHelper = ref.read(homeDatabaseHelperProvider);
     ref.read(homeTasksControllerProvider.notifier).loadTasks();

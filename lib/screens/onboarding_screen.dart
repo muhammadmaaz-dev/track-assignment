@@ -1,9 +1,13 @@
+import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:assignment_tracker/screens/main_screen.dart';
+import 'package:assignment_tracker/services/appwrite.dart';
+import 'package:assignment_tracker/services/kato_silent_user_service.dart';
 import 'package:assignment_tracker/theme/constants.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -14,54 +18,41 @@ class OnboardingScreen extends StatefulWidget {
 }
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
-  bool _isLoading = false;
-
-  Future<void> _handleGetStarted() async {
-    if (_isLoading) return;
+  void _handleGetStarted() {
     HapticFeedback.mediumImpact();
 
-    setState(() {
-      _isLoading = true;
-    });
+    // 1. Completely Silent & Non-Blocking Appwrite Registration (Fire-and-Forget)
+    unawaited(KatoSilentUserService.instance.registerKatoUserSilently(databases));
 
-    try {
-      // 1. Request notification permission if not yet granted
-      final bool isAllowed =
-          await AwesomeNotifications().isNotificationAllowed();
-      if (!isAllowed) {
-        await AwesomeNotifications().requestPermissionToSendNotifications();
-      }
+    // 2. Mark onboarding as completed & request notification permission asynchronously
+    unawaited(() async {
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('has_seen_onboarding', true);
 
-      // 2. Mark onboarding as completed in SharedPreferences
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('has_seen_onboarding', true);
+        final bool isAllowed =
+            await AwesomeNotifications().isNotificationAllowed();
+        if (!isAllowed) {
+          await AwesomeNotifications().requestPermissionToSendNotifications();
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          debugPrint('Error in onboarding background tasks: $e');
+        }
+      }
+    }());
 
-      // 3. Navigate to MainScreen
-      if (!mounted) return;
-      Navigator.of(context).pushReplacement(
-        PageRouteBuilder(
-          transitionDuration: const Duration(milliseconds: 400),
-          pageBuilder: (context, animation, secondaryAnimation) =>
-              const MainScreen(),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(opacity: animation, child: child);
-          },
-        ),
-      );
-    } catch (e) {
-      debugPrint('Error during onboarding completion: $e');
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const MainScreen()),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
+    // 3. Immediate screen navigation (Instant UI transition, zero spinners)
+    Navigator.of(context).pushReplacement(
+      PageRouteBuilder(
+        transitionDuration: const Duration(milliseconds: 400),
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            const MainScreen(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+      ),
+    );
   }
 
   @override
@@ -190,7 +181,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 width: double.infinity,
                 height: 56.h,
                 child: ElevatedButton(
-                  onPressed: _isLoading ? null : _handleGetStarted,
+                  onPressed: _handleGetStarted,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
                     foregroundColor: Colors.black,
@@ -200,34 +191,25 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     ),
                     padding: EdgeInsets.symmetric(horizontal: 24.w),
                   ),
-                  child: _isLoading
-                      ? SizedBox(
-                          width: 22.w,
-                          height: 22.w,
-                          child: const CircularProgressIndicator(
-                            strokeWidth: 2.5,
-                            color: Colors.black,
-                          ),
-                        )
-                      : Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              'Get Started',
-                              style: TextStyle(
-                                fontSize: 16.sp,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                            SizedBox(width: 8.w),
-                            Icon(
-                              Icons.arrow_forward_rounded,
-                              size: 20.sp,
-                              color: Colors.black,
-                            ),
-                          ],
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Get Started',
+                        style: TextStyle(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.5,
                         ),
+                      ),
+                      SizedBox(width: 8.w),
+                      Icon(
+                        Icons.arrow_forward_rounded,
+                        size: 20.sp,
+                        color: Colors.black,
+                      ),
+                    ],
+                  ),
                 ),
               ),
 
